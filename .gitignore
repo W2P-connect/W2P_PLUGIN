@@ -1,0 +1,11 @@
+admin/api/dev/*
+admin/build/index.html
+admin/build/manifest.json
+admin/build/asset-manifest.json
+composer.json
+composer.lock
+vendor/*
+
+
+.vscode
+error_log.log
