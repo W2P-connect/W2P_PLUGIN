@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Hook Helpers
  *
@@ -16,21 +17,22 @@
  * @param  array $value The value to check.
  * @return bool        Whether the value is a logic block value.
  */
-function w2p_is_logic_block_value( $value ) {
+function w2p_is_logic_block_value($value)
+{
 	try {
-		if ( ! is_array( $value ) ) {
+		if (! is_array($value)) {
 			return false;
 		} else {
-			foreach ( $value as $sub_value ) {
-				if ( ! is_array( $sub_value ) || ( is_array( $sub_value ) && ! array_key_exists( 'variables', $sub_value ) ) ) {
+			foreach ($value as $sub_value) {
+				if (! is_array($sub_value) || (is_array($sub_value) && ! array_key_exists('variables', $sub_value))) {
 					return false;
 				}
 			}
 			return true;
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_is_logic_block_value: ' . $e->getMessage(), 'w2p_is_logic_block_value' );
-		w2p_add_error_log( 'Parameter passed: ' . wp_json_encode( $value, JSON_PRETTY_PRINT ), 'w2p_is_logic_block_value' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_is_logic_block_value: ' . $e->getMessage(), 'w2p_is_logic_block_value');
+		w2p_add_error_log('Parameter passed: ' . wp_json_encode($value, JSON_PRETTY_PRINT), 'w2p_is_logic_block_value');
 		return false;
 	}
 }
@@ -47,22 +49,23 @@ function w2p_is_logic_block_value( $value ) {
  *
  * @return array An array of formatted logic block values.
  */
-function w2p_format_logic_blocks( array $logic_blocks, int $source_id, int $user_id ): array {
+function w2p_format_logic_blocks(array $logic_blocks, int $source_id, int $user_id): array
+{
 	try {
 		$formated_logic_blocks = array();
 
-		foreach ( $logic_blocks as $sub_block ) {
+		foreach ($logic_blocks as $sub_block) {
 			$formated_values = array();
-			foreach ( $sub_block['variables'] as $variable ) {
-				$value             = w2p_get_variable_value( $variable, $source_id, $user_id );
+			foreach ($sub_block['variables'] as $variable) {
+				$value             = w2p_get_variable_value($variable, $source_id, $user_id);
 				$formated_values[] = $value;
 			}
 			$formated_logic_blocks[] = $formated_values;
 		}
 		return $formated_logic_blocks;
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_format_logic_blocks: ' . $e->getMessage(), 'w2p_format_logic_blocks' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'logic_blocks', 'source_id', 'user_id' ), JSON_PRETTY_PRINT ), 'w2p_format_logic_blocks' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_format_logic_blocks: ' . $e->getMessage(), 'w2p_format_logic_blocks');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('logic_blocks', 'source_id', 'user_id'), JSON_PRETTY_PRINT), 'w2p_format_logic_blocks');
 		return array();
 	}
 }
@@ -81,29 +84,30 @@ function w2p_format_logic_blocks( array $logic_blocks, int $source_id, int $user
  *
  * @return array|string The formatted values as an array or a string.
  */
-function w2p_format_variables( array $variables_array, $source_id, $user_id, $to_array = true ): array|string {
+function w2p_format_variables(array $variables_array, $source_id, $user_id, $to_array = true): array|string
+{
 	try {
 		$formated_values = array();
 
-		foreach ( $variables_array as $variable ) {
-			$value             = w2p_get_variable_value( $variable, $source_id, $user_id );
+		foreach ($variables_array as $variable) {
+			$value             = w2p_get_variable_value($variable, $source_id, $user_id);
 			$formated_values[] = $value;
 		}
 
 		$filtered_values = array_filter(
 			$formated_values,
-			function ( $value ) {
+			function ($value) {
 				return '' !== $value || null !== $value;
 			}
 		);
 
-		if ( ! $to_array ) {
-			$filtered_values = implode( ' ', $filtered_values );
+		if (! $to_array) {
+			$filtered_values = implode(' ', $filtered_values);
 		}
 		return $filtered_values;
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_format_variables: ' . $e->getMessage(), 'w2p_format_variables' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'variables_array', 'source_id', 'user_id', 'to_array' ), JSON_PRETTY_PRINT ), 'w2p_format_variables' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_format_variables: ' . $e->getMessage(), 'w2p_format_variables');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('variables_array', 'source_id', 'user_id', 'to_array'), JSON_PRETTY_PRINT), 'w2p_format_variables');
 		return $to_array ? array() : '';
 	}
 }
@@ -117,41 +121,42 @@ function w2p_format_variables( array $variables_array, $source_id, $user_id, $to
  *
  * @return string|null The retrieved value or null if an error occurs.
  */
-function w2p_get_variable_value( array $variable, ?int $source_id, ?int $user_id ) {
+function w2p_get_variable_value(array $variable, ?int $source_id, ?int $user_id)
+{
 	try {
-		if ( isset( $variable['isFreeField'] ) && $variable['isFreeField'] ) {
+		if (isset($variable['isFreeField']) && $variable['isFreeField']) {
 			return $variable['value'];
 		} else {
 			$value = null;
-			if ( W2P_HOOK_SOURCES['user'] === $variable['source'] ) {
-				if ( $user_id ) {
-					$user = new W2P_User( $user_id );
-					if ( $user ) {
-						$value = $user->get( $variable['value'] );
+			if (W2P_HOOK_SOURCES['user'] === $variable['source']) {
+				if ($user_id) {
+					$user = new W2P_User($user_id);
+					if ($user) {
+						$value = $user->get($variable['value']);
 					}
 				}
-			} elseif ( W2P_HOOK_SOURCES['order'] === $variable['source'] ) {
-				$order = wc_get_order( $source_id );
-				if ( $order ) {
-					$value = w2p_get_order_value( $order, $variable['value'] );
+			} elseif (W2P_HOOK_SOURCES['order'] === $variable['source']) {
+				$order = wc_get_order($source_id);
+				if ($order) {
+					$value = w2p_get_order_value($order, $variable['value']);
 				} else {
-					w2p_add_error_log( "Order ID #$source_id is not valid while trying to wc_get_order source, searching value for " . $variable['value'], 'w2p_get_variable_value' );
+					w2p_add_error_log("Order ID #$source_id is not valid while trying to wc_get_order source, searching value for " . $variable['value'], 'w2p_get_variable_value');
 				}
-			} elseif ( W2P_HOOK_SOURCES['product'] === $variable['source'] ) {
-				$product = wc_get_product( $source_id );
-				if ( $product ) {
-					$value = w2p_get_product_value( $product, $variable['value'] );
+			} elseif (W2P_HOOK_SOURCES['product'] === $variable['source']) {
+				$product = wc_get_product($source_id);
+				if ($product) {
+					$value = w2p_get_product_value($product, $variable['value']);
 				} else {
-					w2p_add_error_log( "Product ID #$source_id is not valid while trying to wc_get_product, searching value for " . $variable['value'], 'w2p_get_variable_value' );
+					w2p_add_error_log("Product ID #$source_id is not valid while trying to wc_get_product, searching value for " . $variable['value'], 'w2p_get_variable_value');
 				}
-			} elseif ( 'w2p' === $variable['source'] ) {
-				$value = w2p_get_w2p_value( $variable['value'] );
+			} elseif ('w2p' === $variable['source']) {
+				$value = w2p_get_w2p_value($variable['value']);
 			}
 			return $value;
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_get_variable_value: ' . $e->getMessage(), 'w2p_get_variable_value' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'variable', 'source_id', 'user_id' ), JSON_PRETTY_PRINT ), 'w2p_get_variable_value' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_get_variable_value: ' . $e->getMessage(), 'w2p_get_variable_value');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('variable', 'source_id', 'user_id'), JSON_PRETTY_PRINT), 'w2p_get_variable_value');
 		return null;
 	}
 }
@@ -164,23 +169,24 @@ function w2p_get_variable_value( array $variable, ?int $source_id, ?int $user_id
  * @return string|null The retrieved value or null if an error occurs.
  * @throws Exception If the value is not recognized.
  */
-function w2p_get_w2p_value( $value ) {
+function w2p_get_w2p_value($value)
+{
 	try {
-		switch ( $value ) {
+		switch ($value) {
 			case 'w2p_current_time':
-				return current_time( 'mysql' );
+				return current_time('mysql');
 			case 'w2p_current_date':
-				return current_time( 'Y-m-d' );
+				return current_time('Y-m-d');
 			case 'w2p_website_domain':
-				return wp_parse_url( home_url(), PHP_URL_HOST );
+				return wp_parse_url(home_url(), PHP_URL_HOST);
 			case 'w2p_site_title':
-				return get_bloginfo( 'name' );
+				return get_bloginfo('name');
 			default:
-				throw new Exception( "Unknown meta key: $value" );
+				throw new Exception("Unknown meta key: $value");
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_get_w2p_value: ' . $e->getMessage(), 'w2p_get_w2p_value' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'value' ), JSON_PRETTY_PRINT ), 'w2p_get_w2p_value' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_get_w2p_value: ' . $e->getMessage(), 'w2p_get_w2p_value');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('value'), JSON_PRETTY_PRINT), 'w2p_get_w2p_value');
 		return null;
 	}
 }
@@ -193,15 +199,16 @@ function w2p_get_w2p_value( $value ) {
  *
  * @return string|null The retrieved value or null if an error occurs.
  */
-function w2p_get_product_value( $product, $value ) {
+function w2p_get_product_value($product, $value)
+{
 	try {
-		switch ( $value ) {
+		switch ($value) {
 			case 'id':
 				return $product->get_id();
 			case 'name':
 				return $product->get_name();
 			case 'attribute_summary':
-				if ( $product->is_type( 'variation' ) ) {
+				if ($product->is_type('variation')) {
 					return $product->get_attribute_summary();
 				} else {
 					return '';
@@ -233,18 +240,18 @@ function w2p_get_product_value( $product, $value ) {
 			case 'tax_class':
 				return $product->get_tax_class();
 			case 'categories':
-				return implode( ', ', wp_get_post_terms( $product->get_id(), 'product_cat', array( 'fields' => 'names' ) ) );
+				return implode(', ', wp_get_post_terms($product->get_id(), 'product_cat', array('fields' => 'names')));
 			case 'tags':
-				return implode( ', ', wp_get_post_terms( $product->get_id(), 'product_tag', array( 'fields' => 'names' ) ) );
+				return implode(', ', wp_get_post_terms($product->get_id(), 'product_tag', array('fields' => 'names')));
 			case 'attributes':
 				$attributes = $product->get_attributes();
 				return implode(
 					', ',
 					array_map(
-						function ( $key, $value ) {
+						function ($key, $value) {
 							return "$key: $value";
 						},
-						array_keys( $attributes ),
+						array_keys($attributes),
 						$attributes
 					)
 				);
@@ -254,20 +261,20 @@ function w2p_get_product_value( $product, $value ) {
 				return implode(
 					', ',
 					array_map(
-						function ( $key, $value ) {
+						function ($key, $value) {
 							return "$key: $value";
 						},
-						array_keys( $attributes ),
+						array_keys($attributes),
 						$attributes
 					)
 				);
 
 			default:
-				return $product->get_meta( $value );
+				return $product->get_meta($value);
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_get_product_value: ' . $e->getMessage(), 'w2p_get_product_value' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'product', 'value' ), JSON_PRETTY_PRINT ), 'w2p_get_product_value' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_get_product_value: ' . $e->getMessage(), 'w2p_get_product_value');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('product', 'value'), JSON_PRETTY_PRINT), 'w2p_get_product_value');
 		return null;
 	}
 }
@@ -280,9 +287,10 @@ function w2p_get_product_value( $product, $value ) {
  *
  * @return mixed The retrieved value.
  */
-function w2p_get_order_value( $order, $value ) {
+function w2p_get_order_value($order, $value)
+{
 	try {
-		switch ( $value ) {
+		switch ($value) {
 			case 'id':
 				return $order->get_id();
 			case 'billing_first_name':
@@ -342,13 +350,13 @@ function w2p_get_order_value( $order, $value ) {
 			case '_order_status':
 				return $order->get_status();
 			case '_shipping_method':
-				return implode( ', ', $order->get_shipping_methods() );
+				return implode(', ', $order->get_shipping_methods());
 			default:
-				return $order->get_meta( $value );
+				return $order->get_meta($value);
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_get_order_value: ' . $e->getMessage(), 'w2p_get_order_value' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'order', 'value' ), JSON_PRETTY_PRINT ), 'w2p_get_order_value' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_get_order_value: ' . $e->getMessage(), 'w2p_get_order_value');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('order', 'value'), JSON_PRETTY_PRINT), 'w2p_get_order_value');
 		return null;
 	}
 }
@@ -361,28 +369,29 @@ function w2p_get_order_value( $order, $value ) {
  *
  * @return void
  */
-function w2p_handle_custom_hook( $hook, $args ) {
+function w2p_handle_custom_hook($hook, $args)
+{
 	try {
 		$source_id = null;
 		$user_id   = get_current_user_id();
 		$hook_key  = $hook['key'];
 
-		switch ( $hook_key ) {
+		switch ($hook_key) {
 			case 'user_register':
 			case 'profile_update':
-				$source_id = is_object( $args ) ? $args->ID : $args;
+				$source_id = is_object($args) ? $args->ID : $args;
 				break;
 
 			case 'wp_login':
-				$user = get_user_by( 'login', $args );
-				if ( $user ) {
+				$user = get_user_by('login', $args);
+				if ($user) {
 					$source_id = $user->ID;
 				}
 				break;
 
 			case 'woocommerce_new_order':
 				$source_id = $args;
-				$user_id   = w2p_get_customer_id_from_order_id( $source_id );
+				$user_id   = w2p_get_customer_id_from_order_id($source_id);
 				break;
 
 			case 'woocommerce_add_to_cart':
@@ -393,26 +402,27 @@ function w2p_handle_custom_hook( $hook, $args ) {
 				break;
 
 			default:
-				if ( str_starts_with( $hook_key, 'woocommerce_order_status' )
-				|| 'woocommerce_update_order' === $hook_key
+				if (
+					str_starts_with($hook_key, 'woocommerce_order_status')
+					|| 'woocommerce_update_order' === $hook_key
 				) {
 					$source_id = $args;
-					$user_id   = w2p_get_customer_id_from_order_id( $source_id );
+					$user_id   = w2p_get_customer_id_from_order_id($source_id);
 				} else {
-					w2p_add_error_log( "/!\ Hook $hook_key ($hook[category] from $hook[source]) not recognized /!\ ", 'w2p_handle_custom_hook' );
+					w2p_add_error_log("/!\ Hook $hook_key ($hook[category] from $hook[source]) not recognized /!\ ", 'w2p_handle_custom_hook');
 				}
 				break;
 		}
 
-		if ( $source_id && is_int( $source_id ) ) {
-			$hook_obj      = new W2P_Hook( $hook, $source_id );
+		if ($source_id && is_int($source_id)) {
+			$hook_obj      = new W2P_Hook($hook, $source_id);
 			$formated_hook = $hook_obj->w2p_get_formated_hook();
 
-			$transient_key = 'w2p_hook_' . md5( $formated_hook['category'] . '_' . $formated_hook['source'] . '_' . $formated_hook['source_id'] . '_' . $formated_hook['label'] );
-			$previous_data = get_transient( $transient_key );
+			$transient_key = 'w2p_hook_' . md5($formated_hook['category'] . '_' . $formated_hook['source'] . '_' . $formated_hook['source_id'] . '_' . $formated_hook['label']);
+			$previous_data = get_transient($transient_key);
 
-			if ( $hook_obj->get_same_previous_query() ) {
-				w2p_add_error_log( "$hook_key : Nothing to update for the source id $source_id of the category $hook[category] (last query were the same)", 'w2p_register_user_defined_hooks' );
+			if ($hook_obj->get_same_previous_query()) {
+				w2p_add_error_log("$hook_key : Nothing to update for the source id $source_id of the category $hook[category] (last query were the same)", 'w2p_register_user_defined_hooks');
 				return;
 			}
 
@@ -424,14 +434,15 @@ function w2p_handle_custom_hook( $hook, $args ) {
 				$formated_hook
 			);
 
-			w2p_add_error_log( "Hook $hook_key (category: $hook[category]) triggered for source: $source_id (source: $formated_hook[source]), user: $user_id", 'w2p_handle_custom_hook' );
+			w2p_add_error_log("Hook $hook_key (category: $hook[category]) triggered for source: $source_id (source: $formated_hook[source]), user: $user_id", 'w2p_handle_custom_hook');
+			w2p_add_error_log('Parameters passed: ' . print_r($formated_hook, true), 'w2p_handle_custom_hook');
 		} else {
-			$stringified_args = wp_json_encode( $args, JSON_PRETTY_PRINT );
-			w2p_add_error_log( "/!\ Unable to retrieve ID for hook $hook_key ($hook[category]) triggered for source: $source_id ($hook[source]) /!\ : \n$stringified_args", 'w2p_handle_custom_hook' );
+			$stringified_args = wp_json_encode($args, JSON_PRETTY_PRINT);
+			w2p_add_error_log("/!\ Unable to retrieve ID for hook $hook_key ($hook[category]) triggered for source: $source_id ($hook[source]) /!\ : \n$stringified_args", 'w2p_handle_custom_hook');
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_handle_custom_hook: ' . $e->getMessage(), 'w2p_handle_custom_hook' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'hook', 'args' ), JSON_PRETTY_PRINT ), 'w2p_handle_custom_hook' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in w2p_handle_custom_hook: ' . $e->getMessage(), 'w2p_handle_custom_hook');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('hook', 'args'), JSON_PRETTY_PRINT), 'w2p_handle_custom_hook');
 	}
 }
 
@@ -442,9 +453,10 @@ function w2p_handle_custom_hook( $hook, $args ) {
  *
  * @return array|null The hook if found, null otherwise.
  */
-function w2p_find_reference_hook( $key ) {
-	foreach ( W2P_HOOK_LIST as $hook ) {
-		if ( $hook['key'] === $key ) {
+function w2p_find_reference_hook($key)
+{
+	foreach (W2P_HOOK_LIST as $hook) {
+		if ($hook['key'] === $key) {
 			return $hook;
 		}
 	}
@@ -460,20 +472,22 @@ function w2p_find_reference_hook( $key ) {
  *
  * @return W2P_Hook|null The W2P_Hook object if found and enabled, null otherwise.
  */
-function w2p_get_hook( string $key, string $category, int $source_id ) {
+function w2p_get_hook(string $key, string $category, int $source_id)
+{
 	$parameters = w2p_get_parameters();
-	$hooks      = isset( $parameters['w2p']['hookList'] )
+	$hooks      = isset($parameters['w2p']['hookList'])
 		? $parameters['w2p']['hookList']
 		: array();
 
-	if ( $source_id && in_array( $category, W2P_CATEGORY, true ) ) {
-		foreach ( $hooks as $hook ) {
-			if ( isset( $hook['enabled'] )
+	if ($source_id && in_array($category, W2P_CATEGORY, true)) {
+		foreach ($hooks as $hook) {
+			if (
+				isset($hook['enabled'])
 				&& true === $hook['enabled']
 				&& $key === $hook['key']
 				&& $category === $hook['category']
 			) {
-				return new W2P_Hook( $hook, $source_id );
+				return new W2P_Hook($hook, $source_id);
 			}
 		}
 	}
@@ -491,26 +505,27 @@ function w2p_get_hook( string $key, string $category, int $source_id ) {
  *
  * @since 1.0.0
  */
-function w2p_register_user_defined_hooks() {
+function w2p_register_user_defined_hooks()
+{
 	$parameters = w2p_get_parameters();
-	$hooks      = isset( $parameters['w2p']['hookList'] ) ? $parameters['w2p']['hookList'] : array();
+	$hooks      = isset($parameters['w2p']['hookList']) ? $parameters['w2p']['hookList'] : array();
 
-	foreach ( $hooks as $hook ) {
+	foreach ($hooks as $hook) {
 		try {
-			if ( isset( $hook['enabled'] ) && $hook['enabled'] ) {
+			if (isset($hook['enabled']) && $hook['enabled']) {
 				$hook_key  = $hook['key'];
 				$category  = $hook['category'];
-				$reference = w2p_find_reference_hook( $hook['key'] );
+				$reference = w2p_find_reference_hook($hook['key']);
 
-				if ( null !== $reference ) {
-					$hook = array_merge( $hook, $reference );
+				if (null !== $reference) {
+					$hook = array_merge($hook, $reference);
 
-					$priority = W2P_HOOK_PRIORITY[ $category ];
+					$priority = W2P_HOOK_PRIORITY[$category];
 
-					if ( 'woocommerce_cart_updated' === $hook_key ) {
+					if ('woocommerce_cart_updated' === $hook_key) {
 						add_action(
 							'woocommerce_add_to_cart',
-							function () use ( $hook ) {
+							function () use ($hook) {
 								$order_id = w2p_get_current_checkout_order_id();
 								$order_id &&
 									w2p_handle_cart_updated(
@@ -529,7 +544,7 @@ function w2p_register_user_defined_hooks() {
 						);
 						add_action(
 							'woocommerce_after_cart_item_quantity_update',
-							function () use ( $hook ) {
+							function () use ($hook) {
 								$order_id = w2p_get_current_checkout_order_id();
 								$order_id &&
 									w2p_handle_cart_updated(
@@ -548,7 +563,7 @@ function w2p_register_user_defined_hooks() {
 						);
 						add_action(
 							'woocommerce_remove_cart_item',
-							function () use ( $hook ) {
+							function () use ($hook) {
 								$order_id = w2p_get_current_checkout_order_id();
 								$order_id &&
 									w2p_handle_cart_updated(
@@ -568,29 +583,29 @@ function w2p_register_user_defined_hooks() {
 					} else {
 						add_action(
 							$hook_key,
-							function ( $entity_id ) use ( $hook, $hook_key ) {
-								if ( 'woocommerce_update_order' === $hook_key ) {
-									if ( get_current_user_id() ) {
-										$disabled = get_transient( "disable_hook_update_order_$entity_id" );
-										if ( $disabled ) {
-											set_transient( "fired_woocommerce_update_ order_from_card_$entity_id", false );
+							function ($entity_id) use ($hook, $hook_key) {
+								if ('woocommerce_update_order' === $hook_key) {
+									if (get_current_user_id()) {
+										$disabled = get_transient("disable_hook_update_order_$entity_id");
+										if ($disabled) {
+											set_transient("fired_woocommerce_update_ order_from_card_$entity_id", false);
 										} else {
-											w2p_handle_custom_hook( $hook, $entity_id );
+											w2p_handle_custom_hook($hook, $entity_id);
 										}
 									}
 								} else {
-									w2p_handle_custom_hook( $hook, $entity_id );
+									w2p_handle_custom_hook($hook, $entity_id);
 								}
 							},
 							$priority,
 							1
 						);
-						if ( isset( $hook['linked_hooks_key'] ) ) {
-							foreach ( $hook['linked_hooks_key'] as $linked_hook_key ) {
+						if (isset($hook['linked_hooks_key'])) {
+							foreach ($hook['linked_hooks_key'] as $linked_hook_key) {
 								add_action(
 									$linked_hook_key,
-									function ( $entity_id ) use ( $hook, $linked_hook_key ) {
-										w2p_handle_custom_hook( $hook, $entity_id );
+									function ($entity_id) use ($hook, $linked_hook_key) {
+										w2p_handle_custom_hook($hook, $entity_id);
 									},
 									$priority,
 									1
@@ -600,13 +615,13 @@ function w2p_register_user_defined_hooks() {
 					}
 				}
 			}
-		} catch ( Throwable $e ) {
-			w2p_add_error_log( 'Error in registering hook: ' . $e->getMessage(), 'w2p_register_user_defined_hooks' );
+		} catch (Throwable $e) {
+			w2p_add_error_log('Error in registering hook: ' . $e->getMessage(), 'w2p_register_user_defined_hooks');
 		}
 	}
 }
 
-add_action( 'w2p_check_last_woocommerce_update_order', 'w2p_check_last_woocommerce_update_order_handler', 10, 3 );
+add_action('w2p_check_last_woocommerce_update_order', 'w2p_check_last_woocommerce_update_order_handler', 10, 3);
 
 /**
  * Handles the last update order hook for WooCommerce.
@@ -621,18 +636,19 @@ add_action( 'w2p_check_last_woocommerce_update_order', 'w2p_check_last_woocommer
  *
  * @return void
  */
-function w2p_check_last_woocommerce_update_order_handler( $hook, $order_id, $iteration ) {
+function w2p_check_last_woocommerce_update_order_handler($hook, $order_id, $iteration)
+{
 	try {
-		$last_iteration = get_transient( "last_iteration_fired_woocommerce_update_order_from_card_$order_id" );
-		if ( $last_iteration === $iteration ) {
+		$last_iteration = get_transient("last_iteration_fired_woocommerce_update_order_from_card_$order_id");
+		if ($last_iteration === $iteration) {
 			w2p_handle_custom_hook(
 				$hook,
 				$order_id,
 			);
-			set_transient( "last_iteration_fired_woocommerce_update_order_from_card_$order_id", 0, 10 );
+			set_transient("last_iteration_fired_woocommerce_update_order_from_card_$order_id", 0, 10);
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error handling cart update ' . $e->getMessage(), 'w2p_check_last_woocommerce_update_order_handler' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error handling cart update ' . $e->getMessage(), 'w2p_check_last_woocommerce_update_order_handler');
 	}
 }
 
@@ -653,11 +669,12 @@ function w2p_check_last_woocommerce_update_order_handler( $hook, $order_id, $ite
  *
  * @return void
  */
-function w2p_handle_cart_updated( $hook, $order_id ) {
+function w2p_handle_cart_updated($hook, $order_id)
+{
 	try {
-		set_transient( "disable_hook_update_order_$order_id", true, 60 );
-		$iteration = did_action( 'woocommerce_update_order' );
-		set_transient( "last_iteration_fired_woocommerce_update_order_from_card_$order_id", $iteration, 10 );
+		set_transient("disable_hook_update_order_$order_id", true, 60);
+		$iteration = did_action('woocommerce_update_order');
+		set_transient("last_iteration_fired_woocommerce_update_order_from_card_$order_id", $iteration, 10);
 
 		w2p_create_or_update_order_from_api(); // forcing update order at the end.
 		add_action(
@@ -667,21 +684,21 @@ function w2p_handle_cart_updated( $hook, $order_id ) {
 			}
 		);
 
-		if ( ! wp_next_scheduled( 'w2p_check_last_woocommerce_update_order', array( $hook, $order_id, $iteration ) ) ) {
+		if (! wp_next_scheduled('w2p_check_last_woocommerce_update_order', array($hook, $order_id, $iteration))) {
 			wp_schedule_single_event(
 				time() + 2,
 				'w2p_check_last_woocommerce_update_order',
-				array( $hook, $order_id, $iteration )
+				array($hook, $order_id, $iteration)
 			);
 		}
 
-		$next_event = wp_get_scheduled_event( 'w2p_check_last_woocommerce_update_order', array( $hook, $order_id, $iteration ) );
-		if ( ! $next_event ) {
-			w2p_add_error_log( 'No scheduled event for w2p_check_last_woocommerce_update_order', 'w2p_handle_cart_updated' );
+		$next_event = wp_get_scheduled_event('w2p_check_last_woocommerce_update_order', array($hook, $order_id, $iteration));
+		if (! $next_event) {
+			w2p_add_error_log('No scheduled event for w2p_check_last_woocommerce_update_order', 'w2p_handle_cart_updated');
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error in handling cart update: ' . $e->getMessage(), 'w2p_handle_cart_updated' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'hook', 'order_id' ), JSON_PRETTY_PRINT ), 'w2p_handle_cart_updated' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error in handling cart update: ' . $e->getMessage(), 'w2p_handle_cart_updated');
+		w2p_add_error_log('Parameters passed: ' . wp_json_encode(compact('hook', 'order_id'), JSON_PRETTY_PRINT), 'w2p_handle_cart_updated');
 	}
 }
 
@@ -695,33 +712,34 @@ function w2p_handle_cart_updated( $hook, $order_id ) {
  *
  * @return int|null The WooCommerce order ID if successful, or null if an error occurs.
  */
-function w2p_create_or_update_order_from_api() {
+function w2p_create_or_update_order_from_api()
+{
 	try {
 		$order_id = null;
 
-		$request = new WP_REST_Request( 'GET', '/wc/store/v1/checkout' );
-		$request->set_header( 'Nonce', wp_create_nonce( 'wc_store_api' ) );
-		$response = rest_do_request( $request );
+		$request = new WP_REST_Request('GET', '/wc/store/v1/checkout');
+		$request->set_header('Nonce', wp_create_nonce('wc_store_api'));
+		$response = rest_do_request($request);
 
-		if ( is_wp_error( $response ) ) {
-			w2p_add_error_log( 'Error API : ' . $response->get_error_message(), 'w2p_create_order_from_api' );
+		if (is_wp_error($response)) {
+			w2p_add_error_log('Error API : ' . $response->get_error_message(), 'w2p_create_order_from_api');
 			return null;
 		}
 
-		if ( method_exists( $response, 'get_data' ) ) {
+		if (method_exists($response, 'get_data')) {
 			$data = $response->get_data();
 
-			if ( ! empty( $data ) && isset( $data['order_id'] ) ) {
+			if (! empty($data) && isset($data['order_id'])) {
 				$order_id = $data['order_id'];
 			} else {
-				w2p_add_error_log( 'No data in response or order_id missing.', 'w2p_create_order_from_api' );
+				w2p_add_error_log('No data in response or order_id missing.', 'w2p_create_order_from_api');
 			}
 		} else {
-			w2p_add_error_log( 'Response is invalid or does not contain get_data().', 'w2p_create_order_from_api' );
+			w2p_add_error_log('Response is invalid or does not contain get_data().', 'w2p_create_order_from_api');
 		}
 		return $order_id;
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Erreur lors de la création de la commande : ' . $e->getMessage(), 'woocommerce_api_debug' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Erreur lors de la création de la commande : ' . $e->getMessage(), 'woocommerce_api_debug');
 		return null;
 	}
 }
@@ -736,19 +754,20 @@ function w2p_create_or_update_order_from_api() {
  *
  * @return int|null The order ID if available, or null if not found or an error occurs.
  */
-function w2p_get_current_checkout_order_id() {
+function w2p_get_current_checkout_order_id()
+{
 	try {
-		if ( get_current_user_id() ) {
-			$order_id = WC()->session->get( 'store_api_draft_order' );
-			if ( ! $order_id ) {
+		if (get_current_user_id()) {
+			$order_id = WC()->session->get('store_api_draft_order');
+			if (! $order_id) {
 				$order_id = w2p_create_or_update_order_from_api();
 			}
 			return $order_id;
 		} else {
 			return null;
 		}
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error while getting order_id: ' . $e->getMessage(), 'w2p_manage_cart_and_order' );
+	} catch (Throwable $e) {
+		w2p_add_error_log('Error while getting order_id: ' . $e->getMessage(), 'w2p_manage_cart_and_order');
 		return null;
 	}
 }

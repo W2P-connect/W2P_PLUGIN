@@ -8,29 +8,6 @@
 **License:** GPLv3 or later  
 **License URI:** http://www.gnu.org/licenses/gpl-3.0.html
 
-<<<<<<< HEAD
-Thank you for using the W2P Plugin! For detailed setup instructions, please visit our official setup guide:  
-[Setup Guide](https://www.woocommerce-to-pipedrive.com/setup-guide)
-
-## Releases
-
-### Version 1.0.1 (Dec 13, 2024)
-
-- **User Interface Optimization**:
-  - Improved pagination system.
-  - Enhanced UX with the addition of a search field by source ID in the history.
-  - Adjusted interface parameters for better usability.
-- **Cart Functionality**:
-  - Beta testing for the "Updated Cart" feature.
-- **Error Handling**:
-  - Updated traceback parsing to correctly retrieve the last error instead of the first.
-- **Query Management**:
-  - Adjusted order display in case of missing `target_id`.
-  - Added proper `deal_id` support for orders.
-  - Better management of dates and timezone differences (switched from `date` to `gmdate`).
-
-This version brings significant improvements in functionality, error handling, and user experience. Thank you for your continued support!
-=======
 **Integrate your WooCommerce store with Pipedrive CRM** to streamline your sales process and automate customer relationship management.
 
 == Description ==
@@ -114,4 +91,3 @@ Yes, the plugin supports syncing customers and orders made before the installati
 
 **= 1.0.0 =**  
 Initial release. Please configure your API settings under **WooCommerce > Settings > W2P Integration** after installation.
->>>>>>> dev

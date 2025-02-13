@@ -644,7 +644,7 @@ class W2P_Query {
 				if ( $field ) {
 
 					$field_obj       = new W2P_Field( $field );
-					$pipedrive_field = $field_obj->get_field();
+					$pipedrive_field = $field_obj->get_field($this->data["category"]);
 					$data_key        = $pipedrive_field['key'];
 					$values          = $field['values'];
 
