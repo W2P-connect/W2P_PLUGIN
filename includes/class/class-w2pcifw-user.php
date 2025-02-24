@@ -6,17 +6,21 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
- * Class W2P_User
+ * Class W2PCIFW_User
  *
  * Handles custom user-related operations.
  *
  * @package W2P
  */
-class W2P_User extends WP_User {
+class W2PCIFW_User extends WP_User {
 
 	/**
-	 * Constructor for the W2P_User class.
+	 * Constructor for the W2PCIFW_User class.
 	 *
 	 * @param int $id The user ID.
 	 */
@@ -24,8 +28,8 @@ class W2P_User extends WP_User {
 		try {
 			parent::__construct( $id );
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in W2P_User constructor: ' . $e->getMessage(), 'W2P_User->__construct()' );
-			w2p_add_error_log( "Parameters passed: id = $id", 'W2P_User->__construct()' );
+			w2pcifw_add_error_log( 'Error in W2PCIFW_User constructor: ' . $e->getMessage(), 'W2PCIFW_User->__construct()' );
+			w2pcifw_add_error_log( "Parameters passed: id = $id", 'W2PCIFW_User->__construct()' );
 		}
 	}
 
@@ -39,8 +43,8 @@ class W2P_User extends WP_User {
 		try {
 			update_user_meta( $this->ID, $meta_key, $value );
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in update_meta_key: ' . $e->getMessage(), 'W2P_User->update_meta_key()' );
-			w2p_add_error_log( "Parameters passed: meta_key = $meta_key, value = " . wp_json_encode( $value, JSON_PRETTY_PRINT ), 'W2P_User->update_meta_key()' );
+			w2pcifw_add_error_log( 'Error in update_meta_key: ' . $e->getMessage(), 'W2PCIFW_User->update_meta_key()' );
+			w2pcifw_add_error_log( "Parameters passed: meta_key = $meta_key, value = " . wp_json_encode( $value, JSON_PRETTY_PRINT ), 'W2PCIFW_User->update_meta_key()' );
 		}
 	}
 
@@ -53,8 +57,8 @@ class W2P_User extends WP_User {
 		try {
 			return $this->last_name;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in get_lastName: ' . $e->getMessage(), 'W2P_User->get_lastName()' );
-			w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2P_User->get_lastName()' );
+			w2pcifw_add_error_log( 'Error in get_lastName: ' . $e->getMessage(), 'W2PCIFW_User->get_lastName()' );
+			w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2PCIFW_User->get_lastName()' );
 			return ''; // Default value in case of error.
 		}
 	}
@@ -68,8 +72,8 @@ class W2P_User extends WP_User {
 		try {
 			return $this->first_name;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in get_firstName: ' . $e->getMessage(), 'W2P_User->get_firstName()' );
-			w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2P_User->get_firstName()' );
+			w2pcifw_add_error_log( 'Error in get_firstName: ' . $e->getMessage(), 'W2PCIFW_User->get_firstName()' );
+			w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2PCIFW_User->get_firstName()' );
 			return ''; // Default value in case of error.
 		}
 	}
@@ -84,8 +88,8 @@ class W2P_User extends WP_User {
 			$billing_company = $this->get( 'billing_company' );
 			return $billing_company;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in get_company: ' . $e->getMessage(), 'W2P_User->get_company()' );
-			w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2P_User->get_company()' );
+			w2pcifw_add_error_log( 'Error in get_company: ' . $e->getMessage(), 'W2PCIFW_User->get_company()' );
+			w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2PCIFW_User->get_company()' );
 			return ''; // Default value in case of error.
 		}
 	}
@@ -97,7 +101,7 @@ class W2P_User extends WP_User {
 	 */
 	public function is_new_user(): bool {
 		try {
-			if ( 0 !== $this->get( 'w2p_new_user' ) ) {
+			if ( 0 !== $this->get( 'w2pcifw_new_user' ) ) {
 				return false;
 			}
 
@@ -109,12 +113,12 @@ class W2P_User extends WP_User {
 			if ( 0 === $interval->days && 0 === $interval->h && $interval->i <= 1 ) {
 				return true;
 			} else {
-				$this->update_meta_key( 'w2p_new_user', 0 );
+				$this->update_meta_key( 'w2pcifw_new_user', 0 );
 				return false;
 			}
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in is_new_user: ' . $e->getMessage(), 'W2P_User->is_new_user()' );
-			w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2P_User->is_new_user()' );
+			w2pcifw_add_error_log( 'Error in is_new_user: ' . $e->getMessage(), 'W2PCIFW_User->is_new_user()' );
+			w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, JSON_PRETTY_PRINT ), 'W2PCIFW_User->is_new_user()' );
 			return false; // Default value in case of error.
 		}
 	}
@@ -125,10 +129,10 @@ class W2P_User extends WP_User {
 	 * @return array The queries data.
 	 */
 	public function get_person_queries(): array {
-		return W2P_Query::get_queries(
+		return W2PCIFW_Query::get_queries(
 			true,
 			array(
-				'category'  => W2P_CATEGORY['person'],
+				'category'  => W2PCIFW_CATEGORY['person'],
 				'source_id' => $this->ID,
 			),
 			1,
@@ -142,12 +146,12 @@ class W2P_User extends WP_User {
 	 * @return array The queries data.
 	 */
 	public function get_organization_queries(): array {
-		return W2P_Query::get_queries(
+		return W2PCIFW_Query::get_queries(
 			true,
 			array(
-				'category'  => W2P_CATEGORY['organization'],
+				'category'  => W2PCIFW_CATEGORY['organization'],
 				'source_id' => $this->ID,
-				'source'    => W2P_HOOK_SOURCES['user'],
+				'source'    => W2PCIFW_HOOK_SOURCES['user'],
 			),
 			1,
 			-1

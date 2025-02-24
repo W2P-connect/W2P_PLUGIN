@@ -9,6 +9,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Retrieves the customer ID associated with a given WooCommerce order ID.
  *
@@ -20,7 +24,7 @@
  * @param int $order_id The WooCommerce order ID.
  * @return int|null The customer ID associated with the order, or null if not found.
  */
-function w2p_get_customer_id_from_order_id( int $order_id ): ?int {
+function w2pcifw_get_customer_id_from_order_id( int $order_id ): ?int {
 	try {
 		$order = wc_get_order( $order_id );
 
@@ -39,8 +43,8 @@ function w2p_get_customer_id_from_order_id( int $order_id ): ?int {
 			? $customer_id
 			: null;
 	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error retrieving customer ID from order: ' . $e->getMessage(), 'w2p_get_customer_id_from_order_id' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'order_id' ), JSON_PRETTY_PRINT ), 'w2p_get_customer_id_from_order_id' );
+		w2pcifw_add_error_log( 'Error retrieving customer ID from order: ' . $e->getMessage(), 'w2pcifw_get_customer_id_from_order_id' );
+		w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( compact( 'order_id' ), JSON_PRETTY_PRINT ), 'w2pcifw_get_customer_id_from_order_id' );
 		return null;
 	}
 }

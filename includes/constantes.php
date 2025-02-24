@@ -8,19 +8,22 @@
  * @since 1.0.0
  */
 
-if ( ! defined( 'W2P_DISTANT_REST_URL' ) ) {
-	if(w2p_is_local_environment()){
-		// define( 'W2P_DISTANT_REST_URL', 'https://woocommerce-to-pipedrive.com/api/v1' );
-		define( 'W2P_DISTANT_REST_URL', 'http://localhost:3000/api/v1' );
-		
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+if ( ! defined( 'W2PCIFW_DISTANT_REST_URL' ) ) {
+	if ( w2pcifw_is_local_environment() ) {
+		define( 'W2PCIFW_DISTANT_REST_URL', 'http://localhost:3001/api/v1' );
+
 	} else {
-		define( 'W2P_DISTANT_REST_URL', 'https://woocommerce-to-pipedrive.com/api/v1' );
+		define( 'W2PCIFW_DISTANT_REST_URL', 'https://woocommerce-to-pipedrive.com/api/v1' );
 	}
 }
 
-if ( ! defined( 'W2P_VARIABLE_SOURCES' ) ) {
+if ( ! defined( 'W2PCIFW_VARIABLE_SOURCES' ) ) {
 	define(
-		'W2P_VARIABLE_SOURCES',
+		'W2PCIFW_VARIABLE_SOURCES',
 		array(
 			'user'    => 'user',
 			'order'   => 'order',
@@ -30,9 +33,9 @@ if ( ! defined( 'W2P_VARIABLE_SOURCES' ) ) {
 	);
 }
 
-if ( ! defined( 'W2P_HOOK_SOURCES' ) ) {
+if ( ! defined( 'W2PCIFW_HOOK_SOURCES' ) ) {
 	define(
-		'W2P_HOOK_SOURCES',
+		'W2PCIFW_HOOK_SOURCES',
 		array(
 			'user'    => 'user',
 			'order'   => 'order',
@@ -41,9 +44,9 @@ if ( ! defined( 'W2P_HOOK_SOURCES' ) ) {
 	);
 }
 
-if ( ! defined( 'W2P_META_KEYS' ) ) {
+if ( ! defined( 'W2PCIFW_META_KEYS' ) ) {
 	define(
-		'W2P_META_KEYS',
+		'W2PCIFW_META_KEYS',
 		array(
 			array(
 				'label'         => 'Woocomerce (order)',
@@ -136,7 +139,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 						),
 					),
 				),
-				'allowedSource' => array( W2P_HOOK_SOURCES['order'] ),
+				'allowedSource' => array( W2PCIFW_HOOK_SOURCES['order'] ),
 			),
 			array(
 				'label'         => 'Woocomerce (product)',
@@ -358,7 +361,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 						),
 					),
 				),
-				'allowedSource' => array( W2P_HOOK_SOURCES['product'] ),
+				'allowedSource' => array( W2PCIFW_HOOK_SOURCES['product'] ),
 			),
 			array(
 				'label'         => 'Woocommerce (customer)',
@@ -528,7 +531,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 						),
 					),
 				),
-				'allowedSource' => array( W2P_HOOK_SOURCES['user'], W2P_HOOK_SOURCES['order'] ),
+				'allowedSource' => array( W2PCIFW_HOOK_SOURCES['user'], W2PCIFW_HOOK_SOURCES['order'] ),
 			),
 			array(
 				'label'         => 'Wordpress',
@@ -622,7 +625,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 						),
 					),
 				),
-				'allowedSource' => array( W2P_HOOK_SOURCES['user'], W2P_HOOK_SOURCES['order'] ),
+				'allowedSource' => array( W2PCIFW_HOOK_SOURCES['user'], W2PCIFW_HOOK_SOURCES['order'] ),
 			),
 			array(
 				'label'         => 'Environment Data',
@@ -634,7 +637,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 						'metaKeys' => array(
 							array(
 								'label'       => 'Current time',
-								'value'       => 'w2p_current_time',
+								'value'       => 'w2pcifw_current_time',
 								'source'      => 'w2p',
 								'description' => 'Current time when the query is sent to pipedrive',
 								'recommanded' => false,
@@ -642,7 +645,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 							),
 							array(
 								'label'       => 'Current date',
-								'value'       => 'w2p_current_date',
+								'value'       => 'w2pcifw_current_date',
 								'source'      => 'w2p',
 								'description' => 'Current date when the query is sent to pipedrive',
 								'recommanded' => false,
@@ -650,7 +653,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 							),
 							array(
 								'label'       => 'Website domain',
-								'value'       => 'w2p_website_domain',
+								'value'       => 'w2pcifw_website_domain',
 								'source'      => 'w2p',
 								'description' => 'Current Website domain',
 								'recommanded' => false,
@@ -658,7 +661,7 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 							),
 							array(
 								'label'       => 'Site title',
-								'value'       => 'w2p_site_title',
+								'value'       => 'w2pcifw_site_title',
 								'source'      => 'w2p',
 								'description' => 'Title of the current website',
 								'recommanded' => false,
@@ -667,15 +670,15 @@ if ( ! defined( 'W2P_META_KEYS' ) ) {
 						),
 					),
 				),
-				'allowedSource' => array_values( W2P_HOOK_SOURCES ),
+				'allowedSource' => array_values( W2PCIFW_HOOK_SOURCES ),
 			),
 		)
 	);
 }
 
-if ( ! defined( 'W2P_QUERY_CATEGORY_TYPE' ) ) {
+if ( ! defined( 'W2PCIFW_QUERY_CATEGORY_TYPE' ) ) {
 	define(
-		'W2P_QUERY_CATEGORY_TYPE',
+		'W2PCIFW_QUERY_CATEGORY_TYPE',
 		array(
 			'person'       => 'user',
 			'organization' => 'user',
@@ -685,9 +688,9 @@ if ( ! defined( 'W2P_QUERY_CATEGORY_TYPE' ) ) {
 }
 
 // KEEP THIS ORDER!!
-if ( ! defined( 'W2P_CATEGORY' ) ) {
+if ( ! defined( 'W2PCIFW_CATEGORY' ) ) {
 	define(
-		'W2P_CATEGORY',
+		'W2PCIFW_CATEGORY',
 		array(
 			'organization' => 'organization',
 			'person'       => 'person',
@@ -697,9 +700,9 @@ if ( ! defined( 'W2P_CATEGORY' ) ) {
 }
 
 
-if ( ! defined( 'W2P_REQUIRED_FIELDS' ) ) {
+if ( ! defined( 'W2PCIFW_REQUIRED_FIELDS' ) ) {
 	define(
-		'W2P_REQUIRED_FIELDS',
+		'W2PCIFW_REQUIRED_FIELDS',
 		array(
 			'deal'         => array( 'title' ),
 			'person'       => array( 'name' ),
@@ -708,9 +711,9 @@ if ( ! defined( 'W2P_REQUIRED_FIELDS' ) ) {
 	);
 }
 
-if ( ! defined( 'W2P_ORDER_STATUS_HOOK' ) ) {
+if ( ! defined( 'W2PCIFW_ORDER_STATUS_HOOK' ) ) {
 	define(
-		'W2P_ORDER_STATUS_HOOK',
+		'W2PCIFW_ORDER_STATUS_HOOK',
 		array(
 			'on-hold'        => 'woocommerce_order_status_on-hold',
 			'pending'        => 'woocommerce_order_status_pending',
@@ -724,9 +727,9 @@ if ( ! defined( 'W2P_ORDER_STATUS_HOOK' ) ) {
 	);
 }
 
-if ( ! defined( 'W2P_EMPTY_SYNC_ADDITIONAL_DATA' ) ) {
+if ( ! defined( 'W2PCIFW_EMPTY_SYNC_ADDITIONAL_DATA' ) ) {
 	define(
-		'W2P_EMPTY_SYNC_ADDITIONAL_DATA',
+		'W2PCIFW_EMPTY_SYNC_ADDITIONAL_DATA',
 		array(
 			'total_users'           => 0,
 			'current_user'          => 0,
@@ -745,9 +748,9 @@ if ( ! defined( 'W2P_EMPTY_SYNC_ADDITIONAL_DATA' ) ) {
 }
 
 
-if ( ! defined( 'W2P_HOOK_LIST' ) ) {
+if ( ! defined( 'W2PCIFW_HOOK_LIST' ) ) {
 	define(
-		'W2P_HOOK_LIST',
+		'W2PCIFW_HOOK_LIST',
 		array(
 			array(
 				'label'       => 'User login',
@@ -845,9 +848,9 @@ if ( ! defined( 'W2P_HOOK_LIST' ) ) {
 	);
 }
 
-if ( ! defined( 'W2P_HOOK_PRIORITY' ) ) {
+if ( ! defined( 'W2PCIFW_HOOK_PRIORITY' ) ) {
 	define(
-		'W2P_HOOK_PRIORITY',
+		'W2PCIFW_HOOK_PRIORITY',
 		array(
 			'organization' => 100,
 			'person'       => 105,

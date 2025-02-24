@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -14,7 +18,7 @@ add_action(
 			'/start-sync',
 			array(
 				'methods'             => 'GET',
-				'callback'            => 'w2p_start_sync',
+				'callback'            => 'w2pcifw_start_sync',
 				'args'                => array(
 					're-sync' => array(
 						'type'     => 'boolean',
@@ -27,20 +31,20 @@ add_action(
 						'required' => false,
 					),
 				),
-				'permission_callback' => 'w2p_jwt_token',
+				'permission_callback' => 'w2pcifw_jwt_token',
 			)
 		);
 	}
 );
 
 add_action(
-	'w2p_cron_check_sync',
+	'w2pcifw_cron_check_sync',
 	function () {
-		$is_sync_running = get_option( 'w2p_sync_running', false );
-		$last_heartbeat  = get_option( 'w2p_sync_last_heartbeat', null );
+		$is_sync_running = get_option( 'w2pcifw_sync_running', false );
+		$last_heartbeat  = get_option( 'w2pcifw_sync_last_heartbeat', null );
 
 		if ( $is_sync_running && ( ! $last_heartbeat || time() - $last_heartbeat > 60 ) ) {
-			w2p_add_error_log(
+			w2pcifw_add_error_log(
 				'cron job launched: Condition du if du cron déclenché: la syncronisation est running mais pourtant pas de heart_beat' .
 				wp_json_encode(
 					array(
@@ -50,9 +54,9 @@ add_action(
 					),
 					JSON_PRETTY_PRINT
 				),
-				'w2p_cron_check_sync'
+				'w2pcifw_cron_check_sync'
 			);
-			w2p_sync_function( false, true );
+			w2pcifw_sync_function( false, true );
 		}
 	}
 );
@@ -62,11 +66,11 @@ add_action(
  *
  * @return void
  */
-function w2p_reset_sync_options() {
-	update_option( 'w2p_sync_additional_datas', W2P_EMPTY_SYNC_ADDITIONAL_DATA );
-	update_option( 'w2p_sync_last_error', '' );
-	update_option( 'w2p_sync_progress_users', 0 );
-	update_option( 'w2p_sync_progress_orders', 0 );
+function w2pcifw_reset_sync_options() {
+	update_option( 'w2pcifw_sync_additional_datas', W2PCIFW_EMPTY_SYNC_ADDITIONAL_DATA );
+	update_option( 'w2pcifw_sync_last_error', '' );
+	update_option( 'w2pcifw_sync_progress_users', 0 );
+	update_option( 'w2pcifw_sync_progress_orders', 0 );
 }
 
 /**
@@ -75,18 +79,18 @@ function w2p_reset_sync_options() {
  * @param WP_REST_Request $request The REST API request object.
  * @return WP_REST_Response The response object indicating synchronization status.
  */
-function w2p_start_sync( WP_REST_Request $request ) {
+function w2pcifw_start_sync( WP_REST_Request $request ) {
 	try {
 		$retry = $request->get_param( 'retry' );
 
-		if ( ! w2p_is_sync_running() || $retry ) {
-			w2p_add_error_log( 'starting sync ', 'w2p_start_sync' );
+		if ( ! w2pcifw_is_sync_running() || $retry ) {
+			w2pcifw_add_error_log( 'starting sync ', 'w2pcifw_start_sync' );
 
 			if ( ! $retry ) {
-				w2p_reset_sync_options();
+				w2pcifw_reset_sync_options();
 			}
 
-			update_option( 'w2p_start_sync', true );
+			update_option( 'w2pcifw_start_sync', true );
 
 			$sync_url = rest_url( 'w2p/v1/run-sync' );
 			$args     = array(
@@ -100,8 +104,8 @@ function w2p_start_sync( WP_REST_Request $request ) {
 
 			wp_remote_post( $sync_url, $args );
 
-			if ( ! wp_next_scheduled( 'w2p_cron_check_sync' ) ) {
-				wp_schedule_event( time(), 'one_minute', 'w2p_cron_check_sync' );
+			if ( ! wp_next_scheduled( 'w2pcifw_cron_check_sync' ) ) {
+				wp_schedule_event( time(), 'one_minute', 'w2pcifw_cron_check_sync' );
 			}
 
 			return new WP_REST_Response(
@@ -115,7 +119,7 @@ function w2p_start_sync( WP_REST_Request $request ) {
 			return new WP_REST_Response(
 				array(
 					'message' => 'Synchronization already in progress.',
-					'running' => w2p_is_sync_running(),
+					'running' => w2pcifw_is_sync_running(),
 				),
 				200
 			);

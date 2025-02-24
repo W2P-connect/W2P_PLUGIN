@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -15,9 +19,9 @@ add_action(
 			array(
 				array(
 					'methods'             => 'GET',
-					'callback'            => 'w2p_ext_get_query',
+					'callback'            => 'w2pcifw_ext_get_query',
 					'permission_callback' => function ( $request ) {
-						return w2p_check_api_key( $request['api_key'] );
+						return w2pcifw_check_api_key( $request['api_key'] );
 					},
 				),
 			)
@@ -31,10 +35,10 @@ add_action(
  * @param WP_REST_Request $request The request object.
  * @return WP_REST_Response The response object.
  */
-function w2p_ext_get_query( $request ) {
+function w2pcifw_ext_get_query( $request ) {
 	try {
 		$id    = (int) $request->get_param( 'id' );
-		$query = new W2P_Query( $id );
+		$query = new W2PCIFW_Query( $id );
 
 		if ( $query->new_instance ) {
 			return new WP_REST_Response(
@@ -51,7 +55,7 @@ function w2p_ext_get_query( $request ) {
 			);
 		}
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( $e->getMessage(), 'w2p_ext_get_queries' );
+		w2pcifw_add_error_log( $e->getMessage(), 'w2pcifw_ext_get_queries' );
 		return new WP_REST_Response(
 			array(
 				'success'   => false,

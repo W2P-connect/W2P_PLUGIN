@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -15,7 +19,7 @@ add_action(
 			array(
 				array(
 					'methods'             => 'PUT',
-					'callback'            => 'w2p_send_query',
+					'callback'            => 'w2pcifw_send_query',
 					'args'                => array(
 						'direct_to_pipedrive' => array(
 							'type'     => 'boolean',
@@ -27,7 +31,7 @@ add_action(
 							'required' => false,
 						),
 					),
-					'permission_callback' => 'w2p_jwt_token',
+					'permission_callback' => 'w2pcifw_jwt_token',
 				),
 			)
 		);
@@ -40,10 +44,10 @@ add_action(
  * @param WP_REST_Request $request The REST API request object.
  * @return WP_REST_Response The response object containing the result of the operation.
  */
-function w2p_send_query( WP_REST_Request $request ) {
+function w2pcifw_send_query( WP_REST_Request $request ) {
 	try {
 		$id    = (int) $request->get_param( 'id' );
-		$query = new W2P_Query( $id );
+		$query = new W2PCIFW_Query( $id );
 
 		if ( $query->new_instance ) {
 			return new WP_REST_Response(
@@ -81,14 +85,14 @@ function w2p_send_query( WP_REST_Request $request ) {
 			);
 		}
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( $e->getMessage(), 'w2p_send_query' );
+		w2pcifw_add_error_log( $e->getMessage(), 'w2pcifw_send_query' );
 		return new WP_REST_Response(
 			array(
 				'success' => false,
 				'data'    => $query->get_data(),
 				'message' => 'An error occured during sending the query on your website',
 				'payload' => $request->get_params(),
-				'context' => 'Catch triggered during w2p_send_query',
+				'context' => 'Catch triggered during w2pcifw_send_query',
 			),
 			500
 		);

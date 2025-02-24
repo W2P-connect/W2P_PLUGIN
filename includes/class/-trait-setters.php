@@ -10,8 +10,12 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
- * Trait W2P_SetterTrait
+ * Trait W2PCIFW_SetterTrait
  *
  * Provides methods for setting and getting object data.
  *
@@ -19,7 +23,7 @@
  * @since 1.0.0
  */
 
-trait W2P_SetterTrait {
+trait W2PCIFW_SetterTrait {
 
 	/**
 	 * Sets a value in the object's data array.
@@ -33,7 +37,7 @@ trait W2P_SetterTrait {
 				$this->data[ $key ] = $value;
 			}
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( "Error in setter for key: $key, value: " . wp_json_encode( $value ) . ' - ' . $e->getMessage(), 'setter' );
+			w2pcifw_add_error_log( "Error in setter for key: $key, value: " . wp_json_encode( $value ) . ' - ' . $e->getMessage(), 'setter' );
 		}
 	}
 
@@ -47,7 +51,7 @@ trait W2P_SetterTrait {
 		try {
 			return array_key_exists( $key, $this->data ) ? $this->data[ $key ] : null;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( "Error in getter for key: $key - " . $e->getMessage(), 'getter' );
+			w2pcifw_add_error_log( "Error in getter for key: $key - " . $e->getMessage(), 'getter' );
 			return null;
 		}
 	}
@@ -65,7 +69,7 @@ trait W2P_SetterTrait {
 				}
 			}
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in set_from_array with params: ' . wp_json_encode( $params ) . ' - ' . $e->getMessage(), 'set_from_array' );
+			w2pcifw_add_error_log( 'Error in set_from_array with params: ' . wp_json_encode( $params ) . ' - ' . $e->getMessage(), 'set_from_array' );
 		}
 	}
 
@@ -84,7 +88,7 @@ trait W2P_SetterTrait {
 				return 0;
 			}
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in get_id - ' . $e->getMessage(), 'get_id' );
+			w2pcifw_add_error_log( 'Error in get_id - ' . $e->getMessage(), 'get_id' );
 			return 0;
 		}
 	}

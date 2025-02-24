@@ -1,26 +1,30 @@
 <?php
 /**
- * Initializes the W2P_Order class for WooCommerce orders.
+ * Initializes the W2PCIFW_Order class for WooCommerce orders.
  *
  * @package W2P
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
- * Initializes the W2P_Order class if WooCommerce is active.
+ * Initializes the W2PCIFW_Order class if WooCommerce is active.
  */
-function w2p_initialize_order_class() {
-	if ( w2p_is_woocomerce_active() ) {
+function w2pcifw_initialize_order_class() {
+	if ( w2pcifw_is_woocomerce_active() ) {
 
 		/**
-		 * Class W2P_Order
+		 * Class W2PCIFW_Order
 		 *
 		 * Extends WooCommerce WC_Order to add custom functionality.
 		 *
 		 * @package W2P
 		 * @since 1.0.0
 		 */
-		class W2P_Order extends WC_Order {
+		class W2PCIFW_Order extends WC_Order {
 
 			/**
 			 * Indicates if the order is valid.
@@ -30,7 +34,7 @@ function w2p_initialize_order_class() {
 			public $is_order = false;
 
 			/**
-			 * Constructor for the W2P_Order class.
+			 * Constructor for the W2PCIFW_Order class.
 			 *
 			 * @param int $order_id The ID of the WooCommerce order.
 			 */
@@ -44,8 +48,8 @@ function w2p_initialize_order_class() {
 						$this->is_order = false;
 					}
 				} catch ( \Throwable $e ) {
-					w2p_add_error_log( 'Error in W2P_Order constructor: ' . $e->getMessage(), 'W2P_Order->__construct()' );
-					w2p_add_error_log( "Parameters passed: order_id = $order_id", 'W2P_Order->__construct()' );
+					w2pcifw_add_error_log( 'Error in W2PCIFW_Order constructor: ' . $e->getMessage(), 'W2PCIFW_Order->__construct()' );
+					w2pcifw_add_error_log( "Parameters passed: order_id = $order_id", 'W2PCIFW_Order->__construct()' );
 				}
 			}
 
@@ -58,10 +62,10 @@ function w2p_initialize_order_class() {
 				try {
 					$data = parent::get_data();
 
-					$queries = W2P_Query::get_queries(
+					$queries = W2PCIFW_Query::get_queries(
 						true,
 						array(
-							'category'  => W2P_CATEGORY['deal'],
+							'category'  => W2PCIFW_CATEGORY['deal'],
 							'source_id' => $data['id'],
 						),
 						1,
@@ -92,8 +96,8 @@ function w2p_initialize_order_class() {
 					}
 					return $data;
 				} catch ( \Throwable $e ) {
-					w2p_add_error_log( 'Error in get_data: ' . $e->getMessage(), 'W2P_Order->get_data()' );
-					w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, true ), 'W2P_Order->get_data()' );
+					w2pcifw_add_error_log( 'Error in get_data: ' . $e->getMessage(), 'W2PCIFW_Order->get_data()' );
+					w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, true ), 'W2PCIFW_Order->get_data()' );
 					return array();
 				}
 			}
@@ -120,8 +124,8 @@ function w2p_initialize_order_class() {
 						return $last_query['state'];
 					}
 				} catch ( \Throwable $e ) {
-					w2p_add_error_log( 'Error in get_state: ' . $e->getMessage(), 'W2P_Order->get_state()' );
-					w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $queries, true ), 'W2P_Order->get_state()' );
+					w2pcifw_add_error_log( 'Error in get_state: ' . $e->getMessage(), 'W2PCIFW_Order->get_state()' );
+					w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $queries, true ), 'W2PCIFW_Order->get_state()' );
 					return null;
 				}
 			}
@@ -150,8 +154,8 @@ function w2p_initialize_order_class() {
 					}
 					return $products;
 				} catch ( \Throwable $e ) {
-					w2p_add_error_log( 'Error in get_products: ' . $e->getMessage(), 'W2P_Order->get_products()' );
-					w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, true ), 'W2P_Order->get_products()' );
+					w2pcifw_add_error_log( 'Error in get_products: ' . $e->getMessage(), 'W2PCIFW_Order->get_products()' );
+					w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $this, true ), 'W2PCIFW_Order->get_products()' );
 					return array();
 				}
 			}
@@ -196,14 +200,21 @@ function w2p_initialize_order_class() {
 
 						$orders = wc_get_orders( $args );
 
-						$total_items   = count( wc_get_orders( array( 'return' => 'ids' ) ) );
+						$total_items   = count(
+							wc_get_orders(
+								array(
+									'return' => 'ids',
+									'limit'  => -1,
+								)
+							)
+						);
 						$total_pages   = ceil( $total_items / $per_page );
 						$has_next_page = $page < $total_pages;
 					}
 
 					foreach ( $orders as $order ) {
-						$w2p_order     = new W2P_Order( $order->get_id() );
-						$orders_data[] = $w2p_order->get_data();
+						$w2pcifw_order = new W2PCIFW_Order( $order->get_id() );
+						$orders_data[] = $w2pcifw_order->get_data();
 					}
 
 					return array(
@@ -216,8 +227,8 @@ function w2p_initialize_order_class() {
 						),
 					);
 				} catch ( \Throwable $e ) {
-					w2p_add_error_log( 'Error in get_orders: ' . $e->getMessage(), 'W2P_Order::get_orders()' );
-					w2p_add_error_log( "Parameters passed: order_id = $order_id, page = $page, per_page = $per_page", 'W2P_Order::get_orders()' );
+					w2pcifw_add_error_log( 'Error in get_orders: ' . $e->getMessage(), 'W2PCIFW_Order::get_orders()' );
+					w2pcifw_add_error_log( "Parameters passed: order_id = $order_id, page = $page, per_page = $per_page", 'W2PCIFW_Order::get_orders()' );
 					return array(
 						'success' => false,
 						'message' => 'An error occurred while retrieving orders.',
@@ -229,4 +240,4 @@ function w2p_initialize_order_class() {
 	}
 }
 
-add_action( 'woocommerce_loaded', 'w2p_initialize_order_class' );
+add_action( 'woocommerce_loaded', 'w2pcifw_initialize_order_class' );

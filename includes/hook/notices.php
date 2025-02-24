@@ -9,7 +9,11 @@
  * @since 1.0.0
  */
 
-add_action( 'admin_notices', 'w2p_guest_checkout_notification' );
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+add_action( 'admin_notices', 'w2pcifw_guest_checkout_notification' );
 
 /**
  * Displays a warning notification about guest checkout settings.
@@ -19,14 +23,14 @@ add_action( 'admin_notices', 'w2p_guest_checkout_notification' );
  *
  * @return void
  */
-function w2p_guest_checkout_notification() {
+function w2pcifw_guest_checkout_notification() {
 	global $pagenow;
 
 	// Check if guest checkout is enabled.
 	$guest_checkout_enabled = 'yes' === get_option( 'woocommerce_enable_guest_checkout' );
 
 	// Verify current page is W2P settings.
-	$is_w2p_settings = false;
+	$is_w2pcifw_settings = false;
 
 	if ( isset( $_GET['page'] ) ) {
 		// Sanitize and verify the input.
@@ -34,14 +38,14 @@ function w2p_guest_checkout_notification() {
 
 		if ( 'w2p-settings' === $page ) {
 			// Ensure the request includes a valid nonce.
-			if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'w2p_settings_page' ) ) {
-				$is_w2p_settings = 'admin.php' === $pagenow;
+			if ( isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'w2pcifw_settings_page' ) ) {
+				$is_w2pcifw_settings = 'admin.php' === $pagenow;
 			}
 		}
 	}
 
 	// Display notice if conditions are met.
-	if ( $guest_checkout_enabled && $is_w2p_settings ) {
+	if ( $guest_checkout_enabled && $is_w2pcifw_settings ) {
 		?>
 		<div class="notice notice-warning is-dismissible">
 			<h2 style="font-weight:500; font-size:large">Guest Checkout Enabled on Your Online Store</h2>

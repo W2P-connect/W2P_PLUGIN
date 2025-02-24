@@ -9,6 +9,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Charge les fichiers PHP dans un dossier et ses sous-dossiers.
  *
@@ -19,11 +23,11 @@
  *
  * @throws \Throwable Si une erreur est rencontrée.
  */
-function w2p_load_files( $dossier ) {
+function w2pcifw_load_files( $dossier ) {
 	try {
 		$contenu = scandir( $dossier );
 		if ( false === $contenu ) {
-			w2p_add_error_log( "Unable to scan directory: $dossier", 'w2p_load_files()' );
+			w2pcifw_add_error_log( "Unable to scan directory: $dossier", 'w2pcifw_load_files()' );
 			return;
 		}
 
@@ -31,19 +35,19 @@ function w2p_load_files( $dossier ) {
 			if ( '.' !== $element && '..' !== $element ) {
 				$chemin = $dossier . '/' . $element;
 				if ( is_dir( $chemin ) ) {
-					w2p_load_files( $chemin );
+					w2pcifw_load_files( $chemin );
 				} elseif ( pathinfo( $chemin, PATHINFO_EXTENSION ) === 'php' ) {
 					if ( file_exists( $chemin ) ) {
 						include_once $chemin;
 					} else {
-						w2p_add_error_log( "File not found: $chemin", 'w2p_load_files()' );
+						w2pcifw_add_error_log( "File not found: $chemin", 'w2pcifw_load_files()' );
 					}
 				}
 			}
 		}
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_load_files: ' . $e->getMessage(), 'w2p_load_files()' );
-		w2p_add_error_log( "Parameters passed: directory = $dossier", 'w2p_load_files()' );
+		w2pcifw_add_error_log( 'Error in w2pcifw_load_files: ' . $e->getMessage(), 'w2pcifw_load_files()' );
+		w2pcifw_add_error_log( "Parameters passed: directory = $dossier", 'w2pcifw_load_files()' );
 	}
 }
 
@@ -55,39 +59,39 @@ function w2p_load_files( $dossier ) {
  *
  * @return array|null The W2P parameters or null if an error occurs.
  */
-function w2p_get_parameters(): ?array {
+function w2pcifw_get_parameters(): ?array {
 	try {
-		$w2p_parameters = w2p_maybe_json_decode( get_option( 'w2p_parameters' ) );
+		$w2pcifw_parameters = w2pcifw_maybe_json_decode( get_option( 'w2pcifw_parameters' ) );
 
-		if ( null === $w2p_parameters ) {
-			w2p_add_error_log( "Failed to decode JSON for 'w2p_parameters'.", 'w2p_get_parameters()' );
+		if ( null === $w2pcifw_parameters ) {
+			w2pcifw_add_error_log( "Failed to decode JSON for 'w2pcifw_parameters'.", 'w2pcifw_get_parameters()' );
 			return null;
 		}
 
-		if ( isset( $w2p_parameters['pipedrive']['api_key'] ) ) {
-			$w2p_parameters['pipedrive']['api_key'] = w2p_decrypt( $w2p_parameters['pipedrive']['api_key'] );
-			if ( false === $w2p_parameters['pipedrive']['api_key'] ) {
-				w2p_add_error_log( 'Decryption failed for Pipedrive API key.', 'w2p_get_parameters()' );
+		if ( isset( $w2pcifw_parameters['pipedrive']['api_key'] ) ) {
+			$w2pcifw_parameters['pipedrive']['api_key'] = w2pcifw_decrypt( $w2pcifw_parameters['pipedrive']['api_key'] );
+			if ( false === $w2pcifw_parameters['pipedrive']['api_key'] ) {
+				w2pcifw_add_error_log( 'Decryption failed for Pipedrive API key.', 'w2pcifw_get_parameters()' );
 			}
 		}
 
-		if ( isset( $w2p_parameters['pipedrive']['company_domain'] ) ) {
-			$w2p_parameters['pipedrive']['company_domain'] = w2p_decrypt( $w2p_parameters['pipedrive']['company_domain'] );
-			if ( false === $w2p_parameters['pipedrive']['company_domain'] ) {
-				w2p_add_error_log( 'Decryption failed for Pipedrive company domain.', 'w2p_get_parameters()' );
+		if ( isset( $w2pcifw_parameters['pipedrive']['company_domain'] ) ) {
+			$w2pcifw_parameters['pipedrive']['company_domain'] = w2pcifw_decrypt( $w2pcifw_parameters['pipedrive']['company_domain'] );
+			if ( false === $w2pcifw_parameters['pipedrive']['company_domain'] ) {
+				w2pcifw_add_error_log( 'Decryption failed for Pipedrive company domain.', 'w2pcifw_get_parameters()' );
 			}
 		}
 
-		if ( isset( $w2p_parameters['w2p']['api_key'] ) ) {
-			$w2p_parameters['w2p']['api_key'] = w2p_decrypt( $w2p_parameters['w2p']['api_key'] );
-			if ( false === $w2p_parameters['w2p']['api_key'] ) {
-				w2p_add_error_log( 'Decryption failed for W2P API key.', 'w2p_get_parameters()' );
+		if ( isset( $w2pcifw_parameters['w2p']['api_key'] ) ) {
+			$w2pcifw_parameters['w2p']['api_key'] = w2pcifw_decrypt( $w2pcifw_parameters['w2p']['api_key'] );
+			if ( false === $w2pcifw_parameters['w2p']['api_key'] ) {
+				w2pcifw_add_error_log( 'Decryption failed for W2P API key.', 'w2pcifw_get_parameters()' );
 			}
 		}
 
-		return is_array( $w2p_parameters ) ? $w2p_parameters : null;
+		return is_array( $w2pcifw_parameters ) ? $w2pcifw_parameters : null;
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_get_parameters: ' . $e->getMessage(), 'w2p_get_parameters()' );
+		w2pcifw_add_error_log( 'Error in w2pcifw_get_parameters: ' . $e->getMessage(), 'w2pcifw_get_parameters()' );
 		return null;
 	}
 }
@@ -102,13 +106,13 @@ function w2p_get_parameters(): ?array {
  * @param WP_REST_Request $request The REST request object.
  * @return bool True if the token is valid, otherwise false.
  */
-function w2p_jwt_token( $request ) {
-	if ( w2p_is_local_environment() ) {
+function w2pcifw_jwt_token( $request ) {
+	if ( w2pcifw_is_local_environment() ) {
 		return true;
 	}
 
 	$secret_key = $request->get_param( 'secret_key' );
-	if ( ( defined( 'W2P_ENCRYPTION_KEY' ) && W2P_ENCRYPTION_KEY === $secret_key ) || current_user_can( 'manage_options' ) ) {
+	if ( ( w2pcifw_get_encryption_key() === $secret_key ) || current_user_can( 'manage_options' ) ) {
 		return true;
 	}
 
@@ -122,8 +126,8 @@ function w2p_jwt_token( $request ) {
  * @param string $key_to_check The API key to check.
  * @return bool True if the API key is valid, otherwise false.
  */
-function w2p_check_api_key( $key_to_check ): bool {
-	$parameters = w2p_get_parameters();
+function w2pcifw_check_api_key( $key_to_check ): bool {
+	$parameters = w2pcifw_get_parameters();
 	return $parameters && isset( $parameters['w2p']['api_key'] )
 		? $parameters['w2p']['api_key'] === $key_to_check
 		: false;
@@ -134,8 +138,8 @@ function w2p_check_api_key( $key_to_check ): bool {
  *
  * @return string|null The W2P API key or null if an error occurs.
  */
-function w2p_get_api_key(): ?string {
-	$parameters = w2p_get_parameters();
+function w2pcifw_get_api_key(): ?string {
+	$parameters = w2pcifw_get_parameters();
 	return $parameters && isset( $parameters['w2p']['api_key'] )
 		? $parameters['w2p']['api_key']
 		: null;
@@ -150,8 +154,8 @@ function w2p_get_api_key(): ?string {
  * @param bool $schema Whether to include the schema in the returned domain.
  * @return string|null The W2P API domain with or without schema, or null if not available.
  */
-function w2p_get_api_domain( $schema = false ): ?string {
-	$parameters = w2p_get_parameters();
+function w2pcifw_get_api_domain( $schema = false ): ?string {
+	$parameters = w2pcifw_get_parameters();
 	if ( $schema ) {
 		return $parameters && isset( $parameters['w2p']['domain'] )
 			? ( is_ssl()
@@ -170,8 +174,8 @@ function w2p_get_api_domain( $schema = false ): ?string {
  *
  * @return string|null The Pipedrive API key or null if an error occurs.
  */
-function w2p_get_pipedrive_api_key(): ?string {
-	$parameters = w2p_get_parameters();
+function w2pcifw_get_pipedrive_api_key(): ?string {
+	$parameters = w2pcifw_get_parameters();
 	return $parameters && isset( $parameters['pipedrive']['api_key'] )
 		? $parameters['pipedrive']['api_key']
 		: null;
@@ -186,8 +190,8 @@ function w2p_get_pipedrive_api_key(): ?string {
  *
  * @return string|null The Pipedrive company domain with HTTPS schema, or null if not set.
  */
-function w2p_get_pipedrive_domain(): ?string {
-	$parameters = w2p_get_parameters();
+function w2pcifw_get_pipedrive_domain(): ?string {
+	$parameters = w2pcifw_get_parameters();
 	return $parameters
 		&& isset( $parameters['pipedrive']['company_domain'] )
 		&& $parameters['pipedrive']['company_domain']
@@ -206,14 +210,14 @@ function w2p_get_pipedrive_domain(): ?string {
  *
  * @return mixed The decoded associative array or the original data if decoding failed.
  */
-function w2p_maybe_json_decode( $data ) {
+function w2pcifw_maybe_json_decode( $data ) {
 	if ( is_string( $data ) ) {
 		try {
 			$decoded = json_decode( $data, true );
 			return ( json_last_error() === JSON_ERROR_NONE ) ? $decoded : $data;
 		} catch ( Throwable $e ) {
-			w2p_add_error_log( $e->getMessage(), 'w2p_maybe_json_decode' );
-			w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $data, JSON_PRETTY_PRINT ), 'w2p_get_order_value' );
+			w2pcifw_add_error_log( $e->getMessage(), 'w2pcifw_maybe_json_decode' );
+			w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $data, JSON_PRETTY_PRINT ), 'w2pcifw_get_order_value' );
 			return $data;
 		}
 	} else {
@@ -231,7 +235,7 @@ function w2p_maybe_json_decode( $data ) {
  *
  * @return array|null An array of distinct meta keys or null if an error occurs.
  */
-function w2p_get_users_metakey() {
+function w2pcifw_get_users_metakey() {
 	global $wpdb;
 	$table_usermeta = $wpdb->prefix . 'usermeta';
 
@@ -243,33 +247,57 @@ function w2p_get_users_metakey() {
 		);
 		$results = $wpdb->get_results( $query );
 		if ( null === $results ) {
-			w2p_add_error_log( 'Query failed: ' . $wpdb->last_error, 'w2p_get_users_metakey()' );
+			w2pcifw_add_error_log( 'Query failed: ' . $wpdb->last_error, 'w2pcifw_get_users_metakey()' );
 		}
 		return $results;
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( 'Error in w2p_get_users_metakey: ' . $e->getMessage(), 'w2p_get_users_metakey()' );
+		w2pcifw_add_error_log( 'Error in w2pcifw_get_users_metakey: ' . $e->getMessage(), 'w2pcifw_get_users_metakey()' );
 		return null;
 	}
 }
+
 
 /**
  * Logs an error message to a file.
  *
  * The function creates a log entry with the current date and time in ISO 8601 format.
  * It appends the given message and optional function name to the log entry.
- * The log entries are stored in a file named 'error_log.log' in a directory named 'w2p_logs'
+ * The log entries are stored in a file named 'error_log.log' in a directory named 'w2pcifw_logs'
  * in the WordPress uploads directory.
  *
  * @param string $message The error message to log. Default is 'No message'.
  * @param string $func    The name of the function where the error occurred. Default is an empty string.
  */
-function w2p_add_error_log( string $message = 'No message', string $func = '' ) {
+function w2pcifw_add_error_log( string $message = 'No message', string $func = '' ) {
+	global $wp_filesystem;
+
+	if ( ! function_exists( 'WP_Filesystem' ) ) {
+		require_once ABSPATH . 'wp-admin/includes/file.php';
+	}
+
+	if ( ! WP_Filesystem() ) {
+		return;
+	}
+
 	$upload_dir = wp_upload_dir();
-	$log_dir    = $upload_dir['basedir'] . '/w2p_logs/';
+	$log_dir    = $upload_dir['basedir'] . '/w2pcifw_logs/';
 	$log_file   = $log_dir . 'error_log.log';
 
-	if ( ! file_exists( $log_dir ) ) {
-		mkdir( $log_dir, 0755, true );
+	if ( ! $wp_filesystem->exists( $log_dir ) ) {
+		$wp_filesystem->mkdir( $log_dir, 0755 );
+	}
+
+	if ( ! $wp_filesystem->exists( $log_file ) ) {
+		$wp_filesystem->put_contents( $log_file, '', FS_CHMOD_FILE );
+	}
+
+	if ( ! $wp_filesystem->is_writable( $log_file ) ) {
+		return;
+	}
+
+	$existing_logs = $wp_filesystem->get_contents( $log_file );
+	if ( false === $existing_logs ) {
+		$existing_logs = '';
 	}
 
 	$log_entry = gmdate( 'Y-m-d\TH:i:s\Z' );
@@ -278,8 +306,9 @@ function w2p_add_error_log( string $message = 'No message', string $func = '' ) 
 	}
 	$log_entry .= " $message\n";
 
-	file_put_contents( $log_file, $log_entry, FILE_APPEND | LOCK_EX );
+	$wp_filesystem->put_contents( $log_file, $existing_logs . $log_entry, FS_CHMOD_FILE );
 }
+
 
 /**
  * Converts a JSON string to an associative array.
@@ -292,9 +321,9 @@ function w2p_add_error_log( string $message = 'No message', string $func = '' ) 
  *
  * @return array An associative array or an empty array if an error occurs.
  */
-function w2p_json_to_array( string $json ) {
+function w2pcifw_json_to_array( string $json ) {
 	try {
-		$decoded_value = w2p_maybe_json_decode( $json, true );
+		$decoded_value = w2pcifw_maybe_json_decode( $json, true );
 		if ( is_array( $decoded_value ) ) {
 			return array_map(
 				function ( $item ) {
@@ -306,8 +335,8 @@ function w2p_json_to_array( string $json ) {
 			return array();
 		}
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( 'Error: ' . $e->getMessage(), 'w2p_json_to_array' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $json, JSON_PRETTY_PRINT ), 'w2p_json_to_array' );
+		w2pcifw_add_error_log( 'Error: ' . $e->getMessage(), 'w2pcifw_json_to_array' );
+		w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $json, JSON_PRETTY_PRINT ), 'w2pcifw_json_to_array' );
 		return array();
 	}
 }
@@ -324,7 +353,7 @@ function w2p_json_to_array( string $json ) {
  *
  * @return string A JSON string or an empty array in JSON format if an error occurs.
  */
-function w2p_json_encode( array $arr ): string {
+function w2pcifw_json_encode( array $arr ): string {
 	try {
 		$formated_array = array_map(
 			function ( $value ) {
@@ -337,8 +366,8 @@ function w2p_json_encode( array $arr ): string {
 
 		return $formated_string ?? '[]';
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( 'Error: ' . $e->getMessage(), 'w2p_json_encode' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $arr, JSON_PRETTY_PRINT ), 'w2p_json_encode' );
+		w2pcifw_add_error_log( 'Error: ' . $e->getMessage(), 'w2pcifw_json_encode' );
+		w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $arr, JSON_PRETTY_PRINT ), 'w2pcifw_json_encode' );
 		return '[]';
 	}
 }
@@ -351,8 +380,8 @@ function w2p_json_encode( array $arr ): string {
  *
  * @return string The generated meta key.
  */
-function w2p_get_meta_key( string $category, string $suffix ) {
-	return "w2p_{$category}_{$suffix}";
+function w2pcifw_get_meta_key( string $category, string $suffix ) {
+	return "w2pcifw_{$category}_{$suffix}";
 }
 
 /**
@@ -363,13 +392,13 @@ function w2p_get_meta_key( string $category, string $suffix ) {
  *
  * @return bool True if a synchronization is running, false otherwise.
  */
-function w2p_is_sync_running() {
-	$is_sync_running = get_option( 'w2p_sync_running', false );
-	$last_heartbeat  = get_option( 'w2p_sync_last_heartbeat', null );
+function w2pcifw_is_sync_running() {
+	$is_sync_running = get_option( 'w2pcifw_sync_running', false );
+	$last_heartbeat  = get_option( 'w2pcifw_sync_last_heartbeat', null );
 
 	if ( $is_sync_running && ( ! $last_heartbeat || time() - $last_heartbeat > 60 * 60 * 4 ) ) {
-		update_option( 'w2p_sync_running', false );
-		wp_clear_scheduled_hook( 'w2p_cron_check_sync' );
+		update_option( 'w2pcifw_sync_running', false );
+		wp_clear_scheduled_hook( 'w2pcifw_cron_check_sync' );
 
 		$is_sync_running = false;
 	}
@@ -385,7 +414,7 @@ function w2p_is_sync_running() {
  * @param array  $data   The data to send with the request (for POST, PUT, PATCH).
  * @return array Structured response with success, data, raw response, status code, and error.
  */
-function w2p_http_request( string $url, string $method, array $data = array() ) {
+function w2pcifw_http_request( string $url, string $method, array $data = array() ) {
 	try {
 		$args = array(
 			'method'    => strtoupper( $method ),
@@ -424,12 +453,11 @@ function w2p_http_request( string $url, string $method, array $data = array() ) 
 			'raw'         => $body,
 			'status_code' => $status_code,
 		);
-
 	} catch ( Throwable $e ) {
 		// Log errors and return a structured response.
-		w2p_add_error_log( 'HTTP request failed: ' . $e->getMessage(), 'w2p_http_request' );
-		w2p_add_error_log( "URL: $url", 'w2p_http_request' );
-		w2p_add_error_log( "Method: $method", 'w2p_http_request' );
+		w2pcifw_add_error_log( 'HTTP request failed: ' . $e->getMessage(), 'w2pcifw_http_request' );
+		w2pcifw_add_error_log( "URL: $url", 'w2pcifw_http_request' );
+		w2pcifw_add_error_log( "Method: $method", 'w2pcifw_http_request' );
 
 		return array(
 			'success'     => false,
@@ -441,124 +469,11 @@ function w2p_http_request( string $url, string $method, array $data = array() ) 
 }
 
 /**
- * Generates a cryptographically secure encryption key.
- * This key is 256 bits long (32 bytes) and is suitable for use with AES-256 or similar encryption algorithms.
- *
- * @return string The generated encryption key in hexadecimal format.
- */
-function w2p_generate_encryption_key() {
-	if ( function_exists( 'random_bytes' ) ) {
-		return bin2hex( random_bytes( 32 ) ); // Preferred method for PHP 7+.
-	} elseif ( function_exists( 'openssl_random_pseudo_bytes' ) ) {
-		$crypto_strong = false;
-		$key           = openssl_random_pseudo_bytes( 32, $crypto_strong );
-
-		if ( ! $crypto_strong ) {
-			wp_die( 'The encryption key could not be generated securely.' );
-		}
-
-		return bin2hex( $key );
-	} else {
-		wp_die( 'No secure random number generator is available.' );
-	}
-}
-
-/**
- * Encrypts data using AES-256-CBC encryption.
- *
- * If the W2P_ENCRYPTION_KEY constant is not defined, it will be generated and written to wp-config.php.
- * If the key is not 32 bytes long (256 bits), an exception will be thrown.
- *
- * The function returns the encrypted data as a base64-encoded string, prefixed with the 16-byte IV.
- *
- * @param string $data The data to encrypt.
- * @return string The encrypted data.
- * @throws Exception If there is an error encrypting the data.
- */
-function w2p_encrypt( $data ) {
-	try {
-		if ( ! defined( 'W2P_ENCRYPTION_KEY' ) ) {
-			w2p_secret_key_init();
-			if ( ! defined( 'W2P_ENCRYPTION_KEY' ) ) {
-				throw new Exception( 'Encryption key not defined.' );
-			}
-		}
-
-		// Conversion de la clé hexadécimale en binaire.
-		$key = hex2bin( W2P_ENCRYPTION_KEY );
-		if ( strlen( $key ) !== 32 ) {
-			throw new Exception( 'Invalid encryption key length. Key must be 32 bytes for AES-256-CBC.' );
-		}
-
-		$iv             = openssl_random_pseudo_bytes( 16 ); // Génère un IV de 16 octets.
-		$encrypted_data = openssl_encrypt( $data, 'aes-256-cbc', $key, 0, $iv );
-
-		if ( false === $encrypted_data ) {
-			throw new Exception( 'Encryption failed.' );
-		}
-
-		return base64_encode( $iv . $encrypted_data ); // Combine IV et données chiffrées.
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Encryption error: ' . $e->getMessage(), 'w2p_encrypt' );
-		return $data;
-	}
-}
-
-/**
- * Decrypts data using AES-256-CBC encryption.
- *
- * This function is the inverse of w2p_encrypt(). It takes the encrypted data (as a base64-encoded string,
- * prefixed with the 16-byte IV) and returns the decrypted data.
- *
- * If the W2P_ENCRYPTION_KEY constant is not defined, it will be generated and written to wp-config.php.
- * If the key is not 32 bytes long (256 bits), an exception will be thrown.
- *
- * @param string $encrypted_data The encrypted data to decrypt.
- * @return string The decrypted data.
- * @throws Exception If there is an error decrypting the data.
- */
-function w2p_decrypt( $encrypted_data ) {
-	try {
-		if ( ! defined( 'W2P_ENCRYPTION_KEY' ) ) {
-			w2p_secret_key_init();
-			if ( ! defined( 'W2P_ENCRYPTION_KEY' ) ) {
-				throw new Exception( 'Encryption key not defined.' );
-			}
-		}
-
-		$key = hex2bin( W2P_ENCRYPTION_KEY );
-		if ( strlen( $key ) !== 32 ) {
-			throw new Exception( 'Invalid encryption key length. Key must be 32 bytes for AES-256-CBC.' );
-		}
-
-		$encrypted_data = base64_decode( $encrypted_data );
-
-		if ( strlen( $encrypted_data ) < 16 ) {
-			throw new Exception( 'Encrypted data is too short to contain a valid IV.' );
-		}
-
-		$iv             = substr( $encrypted_data, 0, 16 ); // Extract IV.
-		$encrypted_data = substr( $encrypted_data, 16 ); // Extract encrypted data.
-
-		$decrypted_data = openssl_decrypt( $encrypted_data, 'aes-256-cbc', $key, 0, $iv );
-
-		if ( false === $decrypted_data ) {
-			throw new Exception( 'Decryption failed.' );
-		}
-
-		return $decrypted_data;
-	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Decryption error: ' . $e->getMessage(), 'w2p_decrypt' );
-		return $encrypted_data;
-	}
-}
-
-/**
  * Checks if WooCommerce is active.
  *
  * @return bool True if WooCommerce is active, false otherwise.
  */
-function w2p_is_woocomerce_active() {
+function w2pcifw_is_woocomerce_active() {
 	return class_exists( 'WC_Order' );
 }
 
@@ -570,34 +485,19 @@ function w2p_is_woocomerce_active() {
  *
  * @return bool True if the environment is local, false otherwise.
  */
-function w2p_is_local_environment() {
+function w2pcifw_is_local_environment() {
 	$server_name = isset( $_SERVER['SERVER_NAME'] ) ? sanitize_text_field( wp_unslash( $_SERVER['SERVER_NAME'] ) ) : '';
 	return strpos( $server_name, '.local' ) !== false;
 }
 
 /**
- * Compare two arrays, ignoring their order.
- *
- * The function first checks that the input is an array, then uses wp_unslash to clean the values,
- * and finally sorts the keys before comparing the arrays.
+ * Compares two arrays.
  *
  * @param array $array1 The first array to compare.
  * @param array $array2 The second array to compare.
  *
  * @return bool True if the arrays are equal, false otherwise.
  */
-function w2p_compare_arrays( $array1, $array2 ) {
-	if ( ! is_array( $array1 ) || ! is_array( $array2 ) ) {
-		return false;
-	}
-
-	// Nettoyage des valeurs avec wp_unslash (si besoin, pour les données issues de formulaires)
-	$array1 = wp_unslash( $array1 );
-	$array2 = wp_unslash( $array2 );
-
-	// Trier les clés pour comparer sans tenir compte de l'ordre
-	ksort( $array1 );
-	ksort( $array2 );
-
-	return $array1 === $array2;
+function w2pcifw_compare_arrays( $array1, $array2 ) {
+	return $array1 == $array2;
 }

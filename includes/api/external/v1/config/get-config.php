@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -15,9 +19,9 @@ add_action(
 			array(
 				array(
 					'methods'             => 'GET',
-					'callback'            => 'w2p_ext_get_config',
+					'callback'            => 'w2pcifw_ext_get_config',
 					'permission_callback' => function ( $request ) {
-						return w2p_check_api_key( $request['api_key'] );
+						return w2pcifw_check_api_key( $request['api_key'] );
 					},
 				),
 			)
@@ -39,26 +43,26 @@ add_action(
  * @return WP_REST_Response The REST API response containing configuration data
  *                          or error details if an exception occurs.
  */
-function w2p_ext_get_config( $request ) {
+function w2pcifw_ext_get_config( $request ) {
 	try {
 
 		$app_global_data = array(
-			'w2p_client_rest_url'  => get_rest_url() . 'w2p/v1',
-			'users_meta_key'       => w2p_get_users_metakey(),
-			'w2p_distant_rest_url' => W2P_DISTANT_REST_URL,
-			'build_url'            => plugins_url( '/admin/build', __FILE__ ),
-			'CONSTANTES'           => array(
-				'W2P_META_KEYS'       => W2P_META_KEYS,
-				'W2P_REQUIRED_FIELDS' => W2P_REQUIRED_FIELDS,
-				'W2P_HOOK_LIST'       => W2P_HOOK_LIST,
-				'W2P_HOOK_SOURCES'    => array_keys( W2P_HOOK_SOURCES ),
-				'W2P_AVAIBLE_STATES'  => W2P_Query::$avaible_state,
+			'w2pcifw_client_rest_url'  => get_rest_url() . 'w2p/v1',
+			'users_meta_key'           => w2pcifw_get_users_metakey(),
+			'w2pcifw_distant_rest_url' => W2PCIFW_DISTANT_REST_URL,
+			'build_url'                => plugins_url( '/admin/build', __FILE__ ),
+			'CONSTANTES'               => array(
+				'W2PCIFW_META_KEYS'       => W2PCIFW_META_KEYS,
+				'W2PCIFW_REQUIRED_FIELDS' => W2PCIFW_REQUIRED_FIELDS,
+				'W2PCIFW_HOOK_LIST'       => W2PCIFW_HOOK_LIST,
+				'W2PCIFW_HOOK_SOURCES'    => array_keys( W2PCIFW_HOOK_SOURCES ),
+				'W2PCIFW_AVAIBLE_STATES'  => W2PCIFW_Query::$avaible_state,
 			),
 		);
 
-		$parameters = get_option( 'w2p_parameters' );
+		$parameters = get_option( 'w2pcifw_parameters' );
 		if ( $parameters ) {
-			$app_global_data['parameters'] = w2p_get_parameters();
+			$app_global_data['parameters'] = w2pcifw_get_parameters();
 		}
 
 		$parsed_url = wp_parse_url( get_site_url() );
@@ -74,7 +78,7 @@ function w2p_ext_get_config( $request ) {
 			200
 		);
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( $e->getMessage(), 'w2p_ext_get_queries' );
+		w2pcifw_add_error_log( $e->getMessage(), 'w2pcifw_ext_get_queries' );
 		return new WP_REST_Response(
 			array(
 				'success'   => false,

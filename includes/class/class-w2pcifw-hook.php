@@ -2,22 +2,26 @@
 /**
  * Handles hook operations for W2P.
  *
- * This file defines the W2P_Hook class, which provides methods for
+ * This file defines the W2PCIFW_Hook class, which provides methods for
  * managing and retrieving field-related data within the W2P plugin.
  *
  * @package W2P
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
- * Class W2P_Hook
+ * Class W2PCIFW_Hook
  *
  * Handles hook-related operations in the W2P plugin.
  *
  * @package W2P
  * @since 1.0.0
  */
-class W2P_Hook {
+class W2PCIFW_Hook {
 
 	/**
 	 * Hook parameters from configuration.
@@ -34,7 +38,7 @@ class W2P_Hook {
 	private $source_id;
 
 	/**
-	 * Constructor for W2P_Hook.
+	 * Constructor for W2PCIFW_Hook.
 	 *
 	 * Initializes the hook with the provided parameters and source ID. Throws an exception
 	 * if the source ID is invalid or if the source is not defined in the allowed hook sources.
@@ -47,16 +51,16 @@ class W2P_Hook {
 	public function __construct( array $hook_from_parameters, int $source_id ) {
 		try {
 			if ( $source_id < 0 ) {
-				throw new \InvalidArgumentThrowable( "Invalid source_id for W2P_HOOK: $source_id" );
+				throw new \InvalidArgumentThrowable( "Invalid source_id for W2PCIFW_HOOK: $source_id" );
 			}
-			if ( ! isset( W2P_HOOK_SOURCES[ $hook_from_parameters['source'] ] ) ) {
-				throw new \InvalidArgumentThrowable( "Invalid source for W2P_HOOK: {$hook_from_parameters['source']}" );
+			if ( ! isset( W2PCIFW_HOOK_SOURCES[ $hook_from_parameters['source'] ] ) ) {
+				throw new \InvalidArgumentThrowable( "Invalid source for W2PCIFW_HOOK: {$hook_from_parameters['source']}" );
 			}
 
 			$this->hook_from_parameters = $hook_from_parameters;
 			$this->source_id            = $source_id;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in W2P_Hook constructor: ' . $e->getMessage(), 'W2P_Hook->__construct()' );
+			w2pcifw_add_error_log( 'Error in W2PCIFW_Hook constructor: ' . $e->getMessage(), 'W2PCIFW_Hook->__construct()' );
 		}
 	}
 
@@ -65,13 +69,13 @@ class W2P_Hook {
 	 *
 	 * @return array Formatted hook data.
 	 */
-	public function w2p_get_formated_hook(): array {
+	public function w2pcifw_get_formated_hook(): array {
 		try {
 			$formated_hook = array(
 				'fields' => array(),
 			);
 			foreach ( $this->hook_from_parameters['fields'] as $field ) {
-				$formated_field = $this->w2p_format_hook_field( $field );
+				$formated_field = $this->w2pcifw_format_hook_field( $field );
 				if ( $formated_field ) {
 					$formated_hook['fields'][] = $formated_field;
 				}
@@ -85,7 +89,7 @@ class W2P_Hook {
 			$formated_hook['source_id'] = $this->source_id;
 			return $formated_hook;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in w2p_get_formated_hook: ' . $e->getMessage(), 'W2P_Hook->w2p_get_formated_hook()' );
+			w2pcifw_add_error_log( 'Error in w2pcifw_get_formated_hook: ' . $e->getMessage(), 'W2PCIFW_Hook->w2pcifw_get_formated_hook()' );
 			return array();
 		}
 	}
@@ -94,18 +98,19 @@ class W2P_Hook {
 	 * Retrieves the last query with the same category, source, source_id and products than the current hook.
 	 * If the last query has the same fields than the current hook, return the query object, otherwise return null.
 	 *
-	 * @return W2P_Query|null
+	 * @return W2PCIFW_Query|null
 	 */
-	public function get_same_previous_query(): null|W2P_Query {
+	public function get_same_previous_query(): null|W2PCIFW_Query {
 
-		$formated_hook = $this->w2p_get_formated_hook();
+		$formated_hook = $this->w2pcifw_get_formated_hook();
 
-		$last_query_query = W2P_Query::get_queries(
+		$last_query_query = W2PCIFW_Query::get_queries(
 			false,
 			array(
 				'category'  => $formated_hook['category'],
 				'source'    => $formated_hook['source'],
 				'source_id' => $formated_hook['source_id'],
+				'state'     => array( 'DONE', 'SENDED' ),
 			),
 			1,
 			1
@@ -115,11 +120,12 @@ class W2P_Hook {
 			$last_quey_obj      = $last_query_query[0];
 			$last_query_data    = $last_quey_obj->get_data();
 			$last_query_payload = $last_query_data['payload'];
+
 			unset( $last_query_payload['data'] );
 			if (
 				isset( $last_query_payload['fields'] ) &&
-				w2p_compare_arrays( $last_query_payload['fields'], $formated_hook['fields'] ) &&
-				w2p_compare_arrays( $last_query_payload['products'], $formated_hook['products'] )
+				w2pcifw_compare_arrays( $last_query_payload['fields'], $formated_hook['fields'] ) &&
+				w2pcifw_compare_arrays( $last_query_payload['products'], $formated_hook['products'] )
 			) {
 				return $last_quey_obj;
 			}
@@ -143,7 +149,7 @@ class W2P_Hook {
 			}
 
 			$products        = array();
-			$parameters      = w2p_get_parameters();
+			$parameters      = w2pcifw_get_parameters();
 			$deal_parameters = $parameters['w2p']['deal'];
 
 			if ( isset( $deal_parameters['sendProducts'] ) && $deal_parameters['sendProducts'] ) {
@@ -158,7 +164,7 @@ class W2P_Hook {
 
 			return $products;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( "Error in get_order_products for order ID: {$this->source_id} - " . $e->getMessage(), 'W2P_Hook->get_order_products()' );
+			w2pcifw_add_error_log( "Error in get_order_products for order ID: {$this->source_id} - " . $e->getMessage(), 'W2PCIFW_Hook->get_order_products()' );
 			return null;
 		}
 	}
@@ -184,7 +190,7 @@ class W2P_Hook {
 
 			if ( $source_id ) {
 				$product_comment = isset( $deal_parameters['productsComment']['variables'] )
-					? w2p_format_variables(
+					? w2pcifw_format_variables(
 						$deal_parameters['productsComment']['variables'],
 						$source_id,
 						$this->get_user_id(),
@@ -226,7 +232,7 @@ class W2P_Hook {
 				),
 			);
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in format_product: ' . $e->getMessage(), 'W2P_Hook->format_product()' );
+			w2pcifw_add_error_log( 'Error in format_product: ' . $e->getMessage(), 'W2PCIFW_Hook->format_product()' );
 			return array();
 		}
 	}
@@ -238,20 +244,20 @@ class W2P_Hook {
 	 *
 	 * @return array|null Formatted field data or null if invalid.
 	 */
-	private function w2p_format_hook_field( array $field ): ?array {
+	private function w2pcifw_format_hook_field( array $field ): ?array {
 		try {
 			if ( $field['enabled'] ) {
 				return array(
 					'pipedriveFieldId' => $field['pipedriveFieldId'],
 					'condition'        => $field['condition'],
-					'values'           => w2p_is_logic_block_value( $field['value'] )
-						? w2p_format_logic_blocks( $field['value'], $this->source_id, $this->get_user_id() )
+					'values'           => w2pcifw_is_logic_block_value( $field['value'] )
+						? w2pcifw_format_logic_blocks( $field['value'], $this->source_id, $this->get_user_id() )
 						: array( $field['value'] ),
 				);
 			}
 			return null;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in w2p_format_hook_field: ' . $e->getMessage(), 'W2P_Hook->w2p_format_hook_field()' );
+			w2pcifw_add_error_log( 'Error in w2pcifw_format_hook_field: ' . $e->getMessage(), 'W2PCIFW_Hook->w2pcifw_format_hook_field()' );
 			return null;
 		}
 	}
@@ -264,14 +270,14 @@ class W2P_Hook {
 	private function get_user_id(): ?int {
 		try {
 			$source = $this->hook_from_parameters['source'];
-			if ( W2P_HOOK_SOURCES['user'] === $source ) {
+			if ( W2PCIFW_HOOK_SOURCES['user'] === $source ) {
 				return $this->source_id;
-			} elseif ( W2P_HOOK_SOURCES['order'] === $source ) {
-				return w2p_get_customer_id_from_order_id( $this->source_id );
+			} elseif ( W2PCIFW_HOOK_SOURCES['order'] === $source ) {
+				return w2pcifw_get_customer_id_from_order_id( $this->source_id );
 			}
 			return null;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in get_user_id: ' . $e->getMessage(), 'W2P_Hook->get_user_id()' );
+			w2pcifw_add_error_log( 'Error in get_user_id: ' . $e->getMessage(), 'W2PCIFW_Hook->get_user_id()' );
 			return null;
 		}
 	}
@@ -289,17 +295,17 @@ class W2P_Hook {
 	 */
 	public function get_pipedrive_target_id() {
 		try {
-			$meta_key  = w2p_get_meta_key( $this->hook_from_parameters['category'], 'id' );
+			$meta_key  = w2pcifw_get_meta_key( $this->hook_from_parameters['category'], 'id' );
 			$target_id = null;
 
 			if (
-				W2P_CATEGORY['person'] === $this->hook_from_parameters['category']
-				|| W2P_CATEGORY['organization'] === $this->hook_from_parameters['category']
+				W2PCIFW_CATEGORY['person'] === $this->hook_from_parameters['category']
+				|| W2PCIFW_CATEGORY['organization'] === $this->hook_from_parameters['category']
 			) {
-				$user      = new W2P_User( $this->get_user_id() );
+				$user      = new W2PCIFW_User( $this->get_user_id() );
 				$target_id = $user->get( $meta_key, 'id' );
 			} elseif (
-				W2P_CATEGORY['deal'] === $this->hook_from_parameters['category']
+				W2PCIFW_CATEGORY['deal'] === $this->hook_from_parameters['category']
 				&& 'order' === $this->hook_from_parameters['source']
 			) {
 				$order = wc_get_order( $this->source_id );
@@ -310,7 +316,7 @@ class W2P_Hook {
 
 			return $target_id;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error in get_pipedrive_target_id: ' . $e->getMessage(), 'W2P_Hook->get_pipedrive_target_id()' );
+			w2pcifw_add_error_log( 'Error in get_pipedrive_target_id: ' . $e->getMessage(), 'W2PCIFW_Hook->get_pipedrive_target_id()' );
 			return null;
 		}
 	}

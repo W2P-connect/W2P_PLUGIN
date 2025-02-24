@@ -1,23 +1,27 @@
 <?php
 /**
- * W2P_Formater Trait
+ * W2PCIFW_Formater Trait
  *
- * This file contains the W2P_Formater trait, which handles
+ * This file contains the W2PCIFW_Formater trait, which handles
  * formatting and database operations for W2P objects.
  *
  * @package W2P
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
- * Trait W2P_Formater
+ * Trait W2PCIFW_Formater
  *
  * Provides methods for formatting and database operations for W2P objects.
  *
  * @package W2P
  * @since 1.0.0
  */
-trait W2P_Formater {
+trait W2PCIFW_Formater {
 
 	/**
 	 * Loads an object from the database by its ID.
@@ -38,7 +42,7 @@ trait W2P_Formater {
 				foreach ( $object as $key => $value ) {
 					if ( array_key_exists( $key, $this->data ) && $value ) {
 						if ( is_array( $this->data[ $key ] ) ) {
-							$this->data[ $key ] = w2p_json_to_array( $value );
+							$this->data[ $key ] = w2pcifw_json_to_array( $value );
 						} else {
 							$this->data[ $key ] = is_numeric( $value ) ? (float) $value : $value;
 						}
@@ -49,7 +53,7 @@ trait W2P_Formater {
 				$this->new_instance = true;
 			}
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error loading object from DB: ' . $e->getMessage(), 'load_object_from_db' );
+			w2pcifw_add_error_log( 'Error loading object from DB: ' . $e->getMessage(), 'load_object_from_db' );
 		}
 	}
 
@@ -62,11 +66,11 @@ trait W2P_Formater {
 		try {
 			$formatted_data = array();
 			foreach ( $this->data as $key => $value ) {
-				$formatted_data[ $key ] = is_array( $value ) ? w2p_json_encode( $value ) : $value;
+				$formatted_data[ $key ] = is_array( $value ) ? w2pcifw_json_encode( $value ) : $value;
 			}
 			return $formatted_data;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error formatting object for DB: ' . $e->getMessage(), 'format_object_for_db' );
+			w2pcifw_add_error_log( 'Error formatting object for DB: ' . $e->getMessage(), 'format_object_for_db' );
 			return array();
 		}
 	}
@@ -102,7 +106,7 @@ trait W2P_Formater {
 			}
 			return 0;
 		} catch ( \Throwable $e ) {
-			w2p_add_error_log( 'Error saving to DB: ' . $e->getMessage(), 'save_to_database' );
+			w2pcifw_add_error_log( 'Error saving to DB: ' . $e->getMessage(), 'save_to_database' );
 			return 0;
 		}
 	}

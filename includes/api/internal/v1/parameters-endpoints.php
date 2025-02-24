@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -15,19 +19,19 @@ add_action(
 			array(
 				array(
 					'methods'             => 'GET',
-					'callback'            => 'w2p_get_parameters_api',
-					'permission_callback' => 'w2p_jwt_token',
+					'callback'            => 'w2pcifw_get_parameters_api',
+					'permission_callback' => 'w2pcifw_jwt_token',
 				),
 				array(
 					'methods'             => 'PUT',
-					'callback'            => 'w2p_put_parameters',
+					'callback'            => 'w2pcifw_put_parameters',
 					'args'                => array(
 						'parameters' => array(
 							'required' => false,
 							'type'     => 'int',
 						),
 					),
-					'permission_callback' => 'w2p_jwt_token',
+					'permission_callback' => 'w2pcifw_jwt_token',
 				),
 			)
 		);
@@ -43,14 +47,14 @@ add_action(
 			array(
 				array(
 					'methods'             => 'PUT',
-					'callback'            => 'w2p_restore_parameters',
+					'callback'            => 'w2pcifw_restore_parameters',
 					'args'                => array(
 						'parameters' => array(
 							'required' => false,
 							'type'     => 'int',
 						),
 					),
-					'permission_callback' => 'w2p_jwt_token',
+					'permission_callback' => 'w2pcifw_jwt_token',
 				),
 			)
 		);
@@ -62,8 +66,8 @@ add_action(
  *
  * @return WP_REST_Response The response object containing the parameters.
  */
-function w2p_get_parameters_api() {
-	$parameters = w2p_maybe_json_decode( get_option( 'w2p_parameters' ) );
+function w2pcifw_get_parameters_api() {
+	$parameters = w2pcifw_maybe_json_decode( get_option( 'w2pcifw_parameters' ) );
 	return new WP_REST_Response( array( 'data' => $parameters ), 200 );
 }
 
@@ -72,16 +76,16 @@ function w2p_get_parameters_api() {
  *
  * @return WP_REST_Response The response object confirming the restoration.
  */
-function w2p_restore_parameters() {
+function w2pcifw_restore_parameters() {
 	try {
-		delete_option( 'w2p_sync_additional_datas' );
-		delete_option( 'w2p_sync_last_error' );
-		delete_option( 'w2p_sync_progress_users' );
-		delete_option( 'w2p_sync_progress_orders' );
-		delete_option( 'w2p_start_sync' );
-		delete_option( 'w2p_sync_last_heartbeat' );
-		delete_option( 'w2p_sync_running' );
-		delete_option( 'w2p_last_sync' );
+		delete_option( 'w2pcifw_sync_additional_datas' );
+		delete_option( 'w2pcifw_sync_last_error' );
+		delete_option( 'w2pcifw_sync_progress_users' );
+		delete_option( 'w2pcifw_sync_progress_orders' );
+		delete_option( 'w2pcifw_start_sync' );
+		delete_option( 'w2pcifw_sync_last_heartbeat' );
+		delete_option( 'w2pcifw_sync_running' );
+		delete_option( 'w2pcifw_last_sync' );
 
 		return new WP_REST_Response(
 			array(
@@ -91,7 +95,7 @@ function w2p_restore_parameters() {
 			200
 		);
 	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error while restoring parameters: ' . $e->getMessage(), 'w2p_reset_parameters' );
+		w2pcifw_add_error_log( 'Error while restoring parameters: ' . $e->getMessage(), 'w2pcifw_reset_parameters' );
 		return new WP_REST_Response(
 			array(
 				'message' => 'Error while restoring parameters: ' . $e->getMessage(),
@@ -108,20 +112,20 @@ function w2p_restore_parameters() {
  * @param WP_REST_Request $request The REST API request object.
  * @return WP_REST_Response The response object confirming the update status.
  */
-function w2p_put_parameters( $request ) {
+function w2pcifw_put_parameters( $request ) {
 	try {
 		$parameters = $request->get_param( 'parameters' );
 
 		if ( isset( $parameters['w2p']['api_key'] ) ) {
-			$parameters['w2p']['api_key'] = w2p_encrypt( $parameters['w2p']['api_key'] );
+			$parameters['w2p']['api_key'] = w2pcifw_encrypt( $parameters['w2p']['api_key'] );
 		}
 
 		if ( isset( $parameters['pipedrive']['api_key'] ) ) {
-			$parameters['pipedrive']['api_key'] = w2p_encrypt( $parameters['pipedrive']['api_key'] );
+			$parameters['pipedrive']['api_key'] = w2pcifw_encrypt( $parameters['pipedrive']['api_key'] );
 		}
 
 		if ( isset( $parameters['pipedrive']['company_domain'] ) ) {
-			$parameters['pipedrive']['company_domain'] = w2p_encrypt( $parameters['pipedrive']['company_domain'] );
+			$parameters['pipedrive']['company_domain'] = w2pcifw_encrypt( $parameters['pipedrive']['company_domain'] );
 		}
 
 		if ( isset( $parameters['w2p']['hookList'] ) && is_array( $parameters['w2p']['hookList'] ) ) {
@@ -135,25 +139,25 @@ function w2p_put_parameters( $request ) {
 			);
 		}
 
-		$success = update_option( 'w2p_parameters', $parameters );
+		$success = update_option( 'w2pcifw_parameters', $parameters );
 
-		$parameters = w2p_get_parameters();
+		$parameters = w2pcifw_get_parameters();
 
 		return new WP_REST_Response(
 			array(
-				'data'                  => $parameters,
-				'request'               => $request->get_params(),
-				'success'               => $success,
-				'token'                 => wp_generate_auth_cookie( get_current_user_id(), time() + 3600, 'auth' ),
-				'message'               => $success
+				'data'    => $parameters,
+				'request' => $request->get_params(),
+				'success' => $success,
+				'token'   => wp_generate_auth_cookie( get_current_user_id(), time() + 3600, 'auth' ),
+				'message' => $success
 					? 'Parameters updated'
 					: 'Error while updating parameters',
 			),
 			$success ? 200 : 400
 		);
 	} catch ( Throwable $e ) {
-		w2p_add_error_log( 'Error while updating parameters: ' . $e->getMessage(), 'w2p_put_parameters' );
-		w2p_add_error_log( 'Parameters passed: ' . wp_json_encode( $request->get_params(), JSON_PRETTY_PRINT ), 'w2p_put_parameters' );
+		w2pcifw_add_error_log( 'Error while updating parameters: ' . $e->getMessage(), 'w2pcifw_put_parameters' );
+		w2pcifw_add_error_log( 'Parameters passed: ' . wp_json_encode( $request->get_params(), JSON_PRETTY_PRINT ), 'w2pcifw_put_parameters' );
 		return new WP_REST_Response(
 			array(
 				'message' => 'Error while updating parameters: ' . $e->getMessage(),

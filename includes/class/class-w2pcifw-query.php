@@ -1,26 +1,35 @@
 <?php
+
 /**
  * Handles query operations for W2P.
  *
- * This file defines the W2P_Query class, which provides methods for
+ * This file defines the W2PCIFW_Query class, which provides methods for
  * managing and retrieving field-related data within the W2P plugin.
  *
  * @package W2P
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
- * Class W2P_Query
+ * Class W2PCIFW_Query
  *
  * Handles query-related operations in the W2P plugin.
  *
  * @package W2P
  * @since 1.0.0
  */
-class W2P_Query {
+class W2PCIFW_Query {
 
-	use W2P_SetterTrait;
-	use W2P_Formater;
+
+
+
+
+	use W2PCIFW_SetterTrait;
+	use W2PCIFW_Formater;
 
 	/**
 	 * Stores the query data for the W2P plugin.
@@ -90,7 +99,7 @@ class W2P_Query {
 	);
 
 	/**
-	 * Constructor for the W2P_Query class.
+	 * Constructor for the W2PCIFW_Query class.
 	 *
 	 * Initializes the database name with the appropriate table prefix.
 	 * If a valid ID is provided, it loads the corresponding object data from the database.
@@ -99,7 +108,7 @@ class W2P_Query {
 	 */
 	public function __construct( int $id = 0 ) {
 		global $wpdb;
-		$this->db_name = $wpdb->prefix . 'w2p_query';
+		$this->db_name = $wpdb->prefix . 'w2pcifw_query';
 		if ( $id > 0 ) {
 			$this->load_object_from_DB( $id );
 		}
@@ -153,10 +162,10 @@ class W2P_Query {
 	private function get_user_id(): ?int {
 		$user_id = null;
 
-		if ( W2P_HOOK_SOURCES['user'] === $this->data['source'] ) {
+		if ( W2PCIFW_HOOK_SOURCES['user'] === $this->data['source'] ) {
 			$user_id = (int) $this->data['source_id'];
-		} elseif ( W2P_HOOK_SOURCES['order'] === $this->data['source'] ) {
-			$user_id = w2p_get_customer_id_from_order_id( $this->data['source_id'] );
+		} elseif ( W2PCIFW_HOOK_SOURCES['order'] === $this->data['source'] ) {
+			$user_id = w2pcifw_get_customer_id_from_order_id( $this->data['source_id'] );
 		}
 
 		$this->data['user_id'] = $user_id;
@@ -231,6 +240,7 @@ class W2P_Query {
 	 * @param  int    $page     The page number for pagination.
 	 * @param  int    $per_page The number of results per page. Set to -1 for no pagination.
 	 * @param  string $order    The order of the results. Use 'DESC' for descending (default) or 'ASC' for ascending.
+	 * @throws \Exception If the database query fails.
 	 * @return array Array containing the filtered query data and pagination info.
 	 */
 	public static function get_queries(
@@ -242,60 +252,74 @@ class W2P_Query {
 	): array {
 		try {
 			global $wpdb;
-			$db_name = $wpdb->prefix . 'w2p_query';
+			$db_name = $wpdb->prefix . 'w2pcifw_query';
 
-			$query_count = "SELECT COUNT(*) FROM $db_name WHERE 1=1";
-			$query_data  = "SELECT id FROM $db_name WHERE 1=1";
-			$params      = array();
+			$query_count = 'SELECT COUNT(*) FROM %i WHERE 1=1';
+			$query_data  = 'SELECT id FROM %i WHERE 1=1';
+			$params      = array( $db_name );
 
-			if ( ! empty( $filters['state'] ) ) {
-				if ( is_array( $filters['state'] ) ) {
-					$placeholders = implode( ', ', array_fill( 0, count( $filters['state'] ), '%s' ) );
-					$query_count .= " AND `state` IN ($placeholders)";
-					$query_data  .= " AND `state` IN ($placeholders)";
-					$params       = array_merge( $params, $filters['state'] );
-				} else {
-					$query_count .= ' AND `state` = %s';
-					$query_data  .= ' AND `state` = %s';
-					$params[]     = $filters['state'];
-				}
-			}
+			$allowed_filters = array( 'method', 'hook', 'category', 'source_id', 'source', 'target_id', 'user_id', 'state' );
 
-			foreach ( array( 'method', 'hook', 'category', 'source_id', 'source', 'target_id', 'user_id' ) as $filter ) {
-				if ( ! empty( $filters[ $filter ] ) ) {
-					$query_count .= " AND `$filter` = %s";
-					$query_data  .= " AND `$filter` = %s";
-					$params[]     = $filters[ $filter ];
+			foreach ( $filters as $filter => $value ) {
+				if ( in_array( $filter, $allowed_filters, true ) && ! empty( $value ) ) {
+					if ( is_array( $value ) ) {
+						$placeholders = implode( ', ', array_fill( 0, count( $value ), '%s' ) );
+						$query_count .= " AND %i IN ($placeholders)";
+						$query_data  .= " AND %i IN ($placeholders)";
+						$params[]     = $filter;
+						$params       = array_merge( $params, $value );
+					} else {
+						$query_count .= ' AND %i = %s';
+						$query_data  .= ' AND %i = %s';
+						$params[]     = $filter;
+						$params[]     = $value;
+					}
 				}
 			}
 
 			if ( -1 !== $per_page ) {
-				$total_items = $wpdb->get_var( $wpdb->prepare( $query_count, $params ) );
+				$total_items = $wpdb->get_var( $wpdb->prepare( $query_count, ...$params ) );
 				$offset      = ( $page - 1 ) * $per_page;
-				$query_data .= " ORDER BY id $order LIMIT %d, %d";
-				$params[]    = $offset;
-				$params[]    = $per_page;
+
+				if ( strtoupper( $order ) === 'ASC' ) {
+					$query_data .= ' ORDER BY id ASC LIMIT %d, %d';
+				} else {
+					$query_data .= ' ORDER BY id DESC LIMIT %d, %d';
+				}
+				$params[] = $offset;
+				$params[] = $per_page;
 			} else {
-				$total_items = $wpdb->get_var( $wpdb->prepare( $query_count, $params ) );
-				$query_data .= " ORDER BY id $order";
+				$total_items = $wpdb->get_var( $wpdb->prepare( $query_count, ...$params ) );
+
+				if ( strtoupper( $order ) === 'ASC' ) {
+					$query_data .= ' ORDER BY id ASC';
+				} else {
+					$query_data .= ' ORDER BY id DESC';
+				}
 			}
 
-			$query_data  = $wpdb->prepare( $query_data, $params );
-			$results     = $wpdb->get_results( $query_data );
-			$ids         = wp_list_pluck( $results, 'id' );
-			$w2p_queries = array();
+			$query_data = $wpdb->prepare( $query_data, ...$params );
+			$results    = $wpdb->get_results( $query_data );
+
+			if ( $wpdb->last_error ) {
+				throw new Exception( 'Database error: ' . $wpdb->last_error );
+			}
+
+			$ids = wp_list_pluck( $results, 'id' );
+
+			$w2pcifw_queries = array();
 
 			foreach ( $ids as $id ) {
 				$data
-					? $w2p_queries[] = ( new W2P_Query( $id ) )->get_data()
-					: $w2p_queries[] = new W2P_Query( $id );
+					? $w2pcifw_queries[] = ( new W2PCIFW_Query( $id ) )->get_data()
+					: $w2pcifw_queries[] = new W2PCIFW_Query( $id );
 			}
 
 			$total_pages   = -1 !== $per_page ? ceil( $total_items / $per_page ) : 1;
 			$has_next_page = $page < $total_pages;
 
 			return array(
-				'data'       => $w2p_queries,
+				'data'       => $w2pcifw_queries,
 				'pagination' => array(
 					'total_items'   => $total_items,
 					'total_pages'   => $total_pages,
@@ -325,7 +349,7 @@ class W2P_Query {
 	 * @param string $hook The hook associated with the query.
 	 * @param array  $payload Additional data for the query (optional).
 	 *
-	 * @return W2P_Query|bool The created W2P_Query object on success, or false on failure.
+	 * @return W2PCIFW_Query|bool The created W2PCIFW_Query object on success, or false on failure.
 	 */
 	public static function create_query(
 		string $category,
@@ -333,26 +357,26 @@ class W2P_Query {
 		int $source_id,
 		string $hook,
 		array $payload = array(),
-	): W2P_Query|bool {
-		$w2p_query = new W2P_Query();
-		$w2p_query->setter( 'category', $category );
-		$w2p_query->setter( 'source', $source );
-		$w2p_query->setter( 'source_id', $source_id );
-		$w2p_query->setter( 'hook', $hook );
-		$w2p_query->setter( 'payload', $payload );
-		$w2p_query->setter( 'state', 'TODO' );
+	): W2PCIFW_Query|bool {
+		$w2pcifw_query = new W2PCIFW_Query();
+		$w2pcifw_query->setter( 'category', $category );
+		$w2pcifw_query->setter( 'source', $source );
+		$w2pcifw_query->setter( 'source_id', $source_id );
+		$w2pcifw_query->setter( 'hook', $hook );
+		$w2pcifw_query->setter( 'payload', $payload );
+		$w2pcifw_query->setter( 'state', 'TODO' );
 
-		$w2p_query->update_additionnal_data( 'created_at', gmdate( 'Y-m-d\TH:i:s\Z' ) );
+		$w2pcifw_query->update_additionnal_data( 'created_at', gmdate( 'Y-m-d\TH:i:s\Z' ) );
 
 		global $wpdb;
-		$wpdb->insert( $w2p_query->db_name, $w2p_query->format_object_for_DB() );
+		$wpdb->insert( $w2pcifw_query->db_name, $w2pcifw_query->format_object_for_DB() );
 		if ( $wpdb->last_error ) {
 			return false;
 		} else {
 			$id = $wpdb->insert_id;
-			$w2p_query->setter( 'id', $id );
-			$w2p_query->cancel_previous_query();
-			return $w2p_query;
+			$w2pcifw_query->setter( 'id', $id );
+			$w2pcifw_query->cancel_previous_query();
+			return $w2pcifw_query;
 		}
 	}
 
@@ -382,7 +406,7 @@ class W2P_Query {
 	 * @return bool True if the query can be sent, false otherwise.
 	 */
 	private function can_be_sent( $state ) {
-		return 'INVALID' !== $state && 'CANCELED' !== $state && 'SENDED' !== $state;
+		return 'INVALID' !== $state && 'CANCELED' !== $state && 'SENDED' !== $state && 'DONE' !== $state;
 	}
 
 	/**
@@ -402,20 +426,20 @@ class W2P_Query {
 	 * - query: The current object's data.
 	 * - user_data: Additional user data.
 	 * - pipedrive_parameters: An array with the Pipedrive domain and API key.
-	 * - w2p_parameters: An array with parameters for the W2P plugin.
+	 * - w2pcifw_parameters: An array with parameters for the W2P plugin.
 	 *
 	 * @return array The formatted data.
 	 */
 	public function data_for_w2p() {
-		$parameters = w2p_get_parameters();
+		$parameters = w2pcifw_get_parameters();
 		return array(
 			'query'                => $this->get_data(),
 			'user_data'            => $this->get_user_data(),
 			'pipedrive_parameters' => array(
-				'domain'  => w2p_get_pipedrive_domain(),
-				'api_key' => w2p_get_pipedrive_api_key(),
+				'domain'  => w2pcifw_get_pipedrive_domain(),
+				'api_key' => w2pcifw_get_pipedrive_api_key(),
 			),
-			'w2p_parameters'       => $parameters['w2p'],
+			'w2p_parameters'       => $parameters['w2p'], // keep 'w2p_' for compatibility.
 		);
 	}
 
@@ -495,14 +519,14 @@ class W2P_Query {
 			'The query is ready to be sent'
 		);
 
-		$response = w2p_http_request(
-			W2P_DISTANT_REST_URL . '/query',
+		$response = w2pcifw_http_request(
+			W2PCIFW_DISTANT_REST_URL . '/query',
 			'POST',
 			array(
 				'user_query_id'       => $this->get_id(),
 				'direct_to_pipedrive' => $direct_to_pipedrive,
-				'api_key'             => w2p_get_api_key(),
-				'domain'              => w2p_get_api_domain( true ),
+				'api_key'             => w2pcifw_get_api_key(),
+				'domain'              => w2pcifw_get_api_domain( true ),
 				'user_query'          => $this->data_for_w2p(),
 			)
 		);
@@ -510,7 +534,7 @@ class W2P_Query {
 		$this->update_additionnal_data( 'sended_at', gmdate( 'Y-m-d\TH:i:s\Z' ) );
 
 		if ( 201 !== $response['status_code'] && 200 !== $response['status_code'] ) {
-			$message = isset( $response['data']['message'] )
+			$message                   = isset( $response['data']['message'] )
 				? $response['data']['message']
 				: ( 404 === $response['status_code'] || 503 === $response['status_code']
 					? 'Servers are down for maintenance. Apologies for the inconvenience'
@@ -569,6 +593,7 @@ class W2P_Query {
 
 			if ( isset( $pipedrive_response['id'] ) ) {
 				$this->setter( 'target_id', $pipedrive_response['id'] );
+				$this->setter( 'pipedrive_response', array( 'id' => $pipedrive_response['id'] ) );
 				$this->update_source_target_id( $pipedrive_response['id'] );
 				$this->cancel_previous_query();
 			} else {
@@ -577,15 +602,14 @@ class W2P_Query {
 			}
 
 			$this->update_additionnal_data( 'responded_at', gmdate( 'Y-m-d\TH:i:s\Z' ) );
-			$this->setter( 'pipedrive_response', $pipedrive_response );
 		}
 
 		$this->get_data();
 		$this->save_to_database();
 
 		return array(
-			'success'            => $response['data']["success"],
-			'message'            => $response['data']["message"] ?? 'Query sended',
+			'success'            => $response['data']['success'],
+			'message'            => $response['data']['message'] ?? 'Query sended',
 			'data'               => $response['data'],
 			'pipedrive_response' => isset( $pipedrive_response ) ? $pipedrive_response : null,
 			'traceback'          => isset( $traceback ) ? $traceback : null,
@@ -643,8 +667,8 @@ class W2P_Query {
 			foreach ( $formatted_payload['fields'] as $field ) {
 				if ( $field ) {
 
-					$field_obj       = new W2P_Field( $field );
-					$pipedrive_field = $field_obj->get_field($this->data["category"]);
+					$field_obj       = new W2PCIFW_Field( $field );
+					$pipedrive_field = $field_obj->get_field( $this->data['category'] );
 					$data_key        = $pipedrive_field['key'];
 					$values          = $field['values'];
 
@@ -752,7 +776,7 @@ class W2P_Query {
 	private function get_default_payload_data(): array {
 		$data = array();
 
-		$parameters = w2p_get_parameters();
+		$parameters = w2pcifw_get_parameters();
 
 		if ( 'person' === $this->data['category'] ) {
 			if ( $parameters['w2p']['person']['defaultEmailAsName'] ) {
@@ -777,10 +801,10 @@ class W2P_Query {
 			}
 
 			$user_id  = $this->get_user_id();
-			$meta_key = w2p_get_meta_key( W2P_CATEGORY['organization'], 'id' );
+			$meta_key = w2pcifw_get_meta_key( W2PCIFW_CATEGORY['organization'], 'id' );
 			$org_id   = get_user_meta( $user_id, $meta_key, true );
-			if( ! $org_id ) {
-				$org_id = get_user_meta($user_id, "W2P_organization_id", true);
+			if ( ! $org_id ) {
+				$org_id = get_user_meta( $user_id, 'W2PCIFW_organization_id', true );
 			}
 
 			if ( $org_id ) {
@@ -808,7 +832,7 @@ class W2P_Query {
 				$variables = $parameters['w2p']['deal']['defaultOrderName']['variables'];
 				$user_id   = $this->get_user_id();
 
-				$value_to_add = w2p_format_variables( $variables, $this->data['source_id'], $user_id, false );
+				$value_to_add = w2pcifw_format_variables( $variables, $this->data['source_id'], $user_id, false );
 
 				$data[] = array(
 					'key'              => 'title',
@@ -829,14 +853,14 @@ class W2P_Query {
 				$user_data = $this->get_user_data();
 				if ( $user_data ) {
 
-					$meta_key = w2p_get_meta_key( W2P_CATEGORY['organization'], 'id' );
+					$meta_key = w2pcifw_get_meta_key( W2PCIFW_CATEGORY['organization'], 'id' );
 
 					$org_id = isset( $user_data['user_meta'][ $meta_key ][0] )
 						? $user_data['user_meta'][ $meta_key ][0]
 						: null;
 
-					if( ! $org_id ) {
-						$org_id = get_user_meta($user_id, "W2P_organization_id", true);
+					if ( ! $org_id ) {
+						$org_id = get_user_meta( $user_id, 'W2PCIFW_organization_id', true );
 					}
 
 					if ( $org_id ) {
@@ -857,14 +881,14 @@ class W2P_Query {
 						);
 					}
 
-					$meta_key = w2p_get_meta_key( W2P_CATEGORY['person'], 'id' );
+					$meta_key = w2pcifw_get_meta_key( W2PCIFW_CATEGORY['person'], 'id' );
 
 					$person_id = isset( $user_data['user_meta'][ $meta_key ][0] )
 						? $user_data['user_meta'][ $meta_key ][0]
 						: null;
 
-					if(! $person_id ) {
-						$person_id = get_user_meta($user_id, "W2P_person_id", true);
+					if ( ! $person_id ) {
+						$person_id = get_user_meta( $user_id, 'W2PCIFW_person_id', true );
 					}
 
 					if ( $person_id ) {
@@ -896,21 +920,20 @@ class W2P_Query {
 	 *
 	 * This method checks whether the object has the required data to process the
 	 * request. Specifically, for POST requests, it ensures the payload contains
-	 * the necessary fields defined in `W2P_REQUIRED_FIELDS` for the object's
+	 * the necessary fields defined in `W2PCIFW_REQUIRED_FIELDS` for the object's
 	 * category. If validation fails, an appropriate traceback message is added.
 	 *
 	 * @return bool Returns `true` if the object is valid, otherwise `false`.
 	 */
 	public function is_valid() {
+		$data = $this->get_payload_data();
+		if ( ! count( $data ) ) {
+			$this->add_traceback( 'Processing data', false, 'No data available for this request.' );
+			return false;
+		}
+
 		if ( $this->get_method() === 'POST' ) {
-			$data = $this->get_payload_data();
-
-			if ( ! count( $data ) ) {
-				$this->add_traceback( 'Processing data', false, 'No data available for this request.' );
-				return false;
-			}
-
-			$searched_key = W2P_REQUIRED_FIELDS[ $this->data['category'] ];
+			$searched_key = W2PCIFW_REQUIRED_FIELDS[ $this->data['category'] ];
 
 			foreach ( $searched_key as $search_key ) {
 				$found_item = array_filter(
@@ -978,6 +1001,14 @@ class W2P_Query {
 	 * @return string The state of the query.
 	 */
 	public function get_state( $data ): string {
+		$pipedrive_response = $this->data['pipedrive_response'];
+		if ( count( $pipedrive_response ) ) {
+			if ( isset( $pipedrive_response['id'] ) && $pipedrive_response['id'] ) {
+				$this->data['state'] = 'DONE';
+				return 'DONE';
+			}
+		}
+
 		if ( 'CANCELED' === $this->data['state'] ) {
 			return $this->data['state'];
 		}
@@ -990,14 +1021,6 @@ class W2P_Query {
 		if ( $this->get_last_error() ) {
 			$this->data['state'] = 'ERROR';
 			return 'ERROR';
-		}
-
-		$pipedrive_response = $this->data['pipedrive_response'];
-		if ( count( $pipedrive_response ) ) {
-			if ( isset( $pipedrive_response['id'] ) && $pipedrive_response['id'] ) {
-				$this->data['state'] = 'DONE';
-				return 'DONE';
-			}
 		}
 
 		if ( isset( $data['additional_data']['sended_at'] ) && $data['additional_data']['sended_at'] ) {
@@ -1018,12 +1041,12 @@ class W2P_Query {
 	public function update_source_target_id( $target_id ) {
 		$source_id = $this->getter( 'source_id' );
 		$user_id   = $this->get_user_id();
-		$meta_key  = w2p_get_meta_key( W2P_CATEGORY[ $this->data['category'] ], 'id' );
+		$meta_key  = w2pcifw_get_meta_key( W2PCIFW_CATEGORY[ $this->data['category'] ], 'id' );
 
-		$parameters = w2p_get_parameters();
+		$parameters = w2pcifw_get_parameters();
 
 		switch ( $this->getter( 'category' ) ) {
-			case W2P_CATEGORY['person']:
+			case W2PCIFW_CATEGORY['person']:
 				// Bien que la source puissent être une commande ou un produit, c'est bien l'utilisateur que l'on souhaite mettre à jour vu que la catégory est une person ou une organsation.
 				update_user_meta( $user_id, $meta_key, $target_id );
 
@@ -1031,16 +1054,16 @@ class W2P_Query {
 					$parameters['w2p']['person']['linkToOrga']
 					&& isset( $this->data['pipedrive_response']['org_id']['value'] )
 				) {
-					$meta_key = w2p_get_meta_key( W2P_CATEGORY['organization'], 'id' );
+					$meta_key = w2pcifw_get_meta_key( W2PCIFW_CATEGORY['organization'], 'id' );
 					update_user_meta( $user_id, $meta_key, $this->data['pipedrive_response']['org_id']['value'] );
 				}
 				break;
 
-			case W2P_CATEGORY['organization']:
+			case W2PCIFW_CATEGORY['organization']:
 				update_user_meta( $user_id, $meta_key, $target_id );
 				break;
 
-			case W2P_CATEGORY['deal']:
+			case W2PCIFW_CATEGORY['deal']:
 				// Il n'y à que des hook de source 'order' pour la catégorie deal.
 				// Source_id est donc forcément une commande.
 				update_post_meta( $source_id, $meta_key, $target_id );
@@ -1090,23 +1113,23 @@ class W2P_Query {
 		}
 
 		$target_id = null;
-		$meta_key  = w2p_get_meta_key( $this->data['category'], 'id' );
+		$meta_key  = w2pcifw_get_meta_key( $this->data['category'], 'id' );
 
 		if ( ! (int) $this->data['source_id'] ) {
 			$this->data['target_id'] = null;
 			return $target_id;
 		}
 
-		if ( ( W2P_CATEGORY['person'] === $this->data['category']
-				|| W2P_CATEGORY['organization'] === $this->data['category'] )
+		if ( ( W2PCIFW_CATEGORY['person'] === $this->data['category']
+				|| W2PCIFW_CATEGORY['organization'] === $this->data['category'] )
 			&& (int) $this->get_user_id()
 		) {
-			$user = new W2P_User( (int) $this->get_user_id() );
+			$user = new W2PCIFW_User( (int) $this->get_user_id() );
 			if ( $user ) {
 				$target_id = $user->get( $meta_key, 'id' );
 			}
 		} elseif (
-			W2P_CATEGORY['deal'] === $this->data['category']
+			W2PCIFW_CATEGORY['deal'] === $this->data['category']
 			&& 'order' === $this->data['source']
 		) {
 			$target_id = get_post_meta( $this->data['source_id'], $meta_key, 'id' );

@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -14,8 +18,8 @@ add_action(
 			'/orders',
 			array(
 				'methods'             => 'GET',
-				'callback'            => 'w2p_get_orders',
-				'permission_callback' => 'w2p_jwt_token',
+				'callback'            => 'w2pcifw_get_orders',
+				'permission_callback' => 'w2pcifw_jwt_token',
 			)
 		);
 	}
@@ -27,15 +31,15 @@ add_action(
  * @param WP_REST_Request $request The REST API request object.
  * @return WP_REST_Response The response object containing the orders or error information.
  */
-function w2p_get_orders( WP_REST_Request $request ) {
+function w2pcifw_get_orders( WP_REST_Request $request ) {
 	try {
 
 		$order_id = (int) $request->get_param( 'orderId' );
 		$page     = (int) $request->get_param( 'page' );
 		$per_page = (int) $request->get_param( 'per_page' );
 
-		if ( w2p_is_woocomerce_active() ) {
-			$orders = W2P_Order::get_orders(
+		if ( w2pcifw_is_woocomerce_active() ) {
+			$orders = W2PCIFW_Order::get_orders(
 				$order_id ? $order_id : null,
 				$page ? $page : null,
 				$per_page ? $per_page : null,
@@ -56,7 +60,7 @@ function w2p_get_orders( WP_REST_Request $request ) {
 			);
 		}
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( $e->getMessage(), 'w2p_get_orders' );
+		w2pcifw_add_error_log( $e->getMessage(), 'w2pcifw_get_orders' );
 		return new WP_REST_Response(
 			array(
 				'success'   => false,

@@ -10,6 +10,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Displays custom Pipedrive fields (Person ID and Organization ID) on the user profile page.
  *
@@ -18,19 +22,18 @@
  *
  * @param WP_User $user The current user object.
  */
-function w2p_pipedrive_custom_user_profile_fields( $user ) {
-	$w2p_person_id       = get_user_meta( $user->ID, w2p_get_meta_key( W2P_CATEGORY['person'], 'id' ), true );
-	$w2p_organization_id = get_user_meta( $user->ID, w2p_get_meta_key( W2P_CATEGORY['organization'], 'id' ), true );
-	
-	//Old support for 'W2P' prefix.
-	if(!$w2p_person_id) {
-		$w2p_person_id = get_user_meta( $user->ID, 'W2P_person_id', true );
+function w2pcifw_pipedrive_custom_user_profile_fields( $user ) {
+	$w2pcifw_person_id       = get_user_meta( $user->ID, w2pcifw_get_meta_key( W2PCIFW_CATEGORY['person'], 'id' ), true );
+	$w2pcifw_organization_id = get_user_meta( $user->ID, w2pcifw_get_meta_key( W2PCIFW_CATEGORY['organization'], 'id' ), true );
+
+	// Old support for 'W2P' prefix.
+	if ( ! $w2pcifw_person_id ) {
+		$w2pcifw_person_id = get_user_meta( $user->ID, 'W2PCIFW_person_id', true );
 	}
-	
-	if(!$w2p_organization_id) {
-		$w2p_organization_id = get_user_meta( $user->ID, 'W2P_organization_id', true );
+
+	if ( ! $w2pcifw_organization_id ) {
+		$w2pcifw_organization_id = get_user_meta( $user->ID, 'W2PCIFW_organization_id', true );
 	}
-	w2p_add_error_log( $w2p_organization_id, 'w2p_pipedrive_custom_user_profile_fields' );
 
 	?>
 	<h3>Pipedrive Information</h3>
@@ -38,23 +41,23 @@ function w2p_pipedrive_custom_user_profile_fields( $user ) {
 
 	<table class="form-table">
 		<tr>
-			<th><label for="w2p_person_id">Pipedrive Person ID</label></th>
+			<th><label for="w2pcifw_person_id">Pipedrive Person ID</label></th>
 			<td>
-				<input type="number" name="w2p_person_id" id="w2p_person_id" value="<?php echo esc_attr( $w2p_person_id ); ?>" class="regular-text" />
+				<input type="number" name="w2pcifw_person_id" id="w2pcifw_person_id" value="<?php echo esc_attr( $w2pcifw_person_id ); ?>" class="regular-text" />
 			</td>
 		</tr>
 		<tr>
-			<th><label for="w2p_organization_id">Pipedrive Organization ID</label></th>
+			<th><label for="w2pcifw_organization_id">Pipedrive Organization ID</label></th>
 			<td>
-				<input type="number" name="w2p_organization_id" id="w2p_organization_id" value="<?php echo esc_attr( $w2p_organization_id ); ?>" class="regular-text" />
+				<input type="number" name="w2pcifw_organization_id" id="w2pcifw_organization_id" value="<?php echo esc_attr( $w2pcifw_organization_id ); ?>" class="regular-text" />
 			</td>
 		</tr>
 	</table>
 	<?php
-	wp_nonce_field( 'w2p_save_pipedrive_fields', 'w2p_pipedrive_nonce' );
+	wp_nonce_field( 'w2pcifw_save_pipedrive_fields', 'w2pcifw_pipedrive_nonce' );
 }
-add_action( 'show_user_profile', 'w2p_pipedrive_custom_user_profile_fields' );
-add_action( 'edit_user_profile', 'w2p_pipedrive_custom_user_profile_fields' );
+add_action( 'show_user_profile', 'w2pcifw_pipedrive_custom_user_profile_fields' );
+add_action( 'edit_user_profile', 'w2pcifw_pipedrive_custom_user_profile_fields' );
 
 /**
  * Saves the custom Pipedrive fields (Person ID and Organization ID) from the user profile page.
@@ -65,23 +68,23 @@ add_action( 'edit_user_profile', 'w2p_pipedrive_custom_user_profile_fields' );
  * @param int $user_id The ID of the user being updated.
  * @return void|false Returns false if the current user lacks permission to edit the user.
  */
-function save_w2p_pipedrive_custom_user_profile_fields( $user_id ) {
+function save_w2pcifw_pipedrive_custom_user_profile_fields( $user_id ) {
 	if ( ! current_user_can( 'edit_user', $user_id ) ) {
 		return false;
 	}
 
-	if ( ! isset( $_POST['w2p_pipedrive_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['w2p_pipedrive_nonce'] ) ), 'w2p_save_pipedrive_fields' ) ) {
+	if ( ! isset( $_POST['w2pcifw_pipedrive_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['w2pcifw_pipedrive_nonce'] ) ), 'w2pcifw_save_pipedrive_fields' ) ) {
 		return false;
 	}
 
-	if ( isset( $_POST['w2p_person_id'] ) ) {
-		update_user_meta( $user_id, w2p_get_meta_key( W2P_CATEGORY['person'], 'id' ), intval( $_POST['w2p_person_id'] ) );
+	if ( isset( $_POST['w2pcifw_person_id'] ) ) {
+		update_user_meta( $user_id, w2pcifw_get_meta_key( W2PCIFW_CATEGORY['person'], 'id' ), intval( $_POST['w2pcifw_person_id'] ) );
 	}
 
-	if ( isset( $_POST['w2p_organization_id'] ) ) {
-		update_user_meta( $user_id, w2p_get_meta_key( W2P_CATEGORY['organization'], 'id' ), intval( $_POST['w2p_organization_id'] ) );
+	if ( isset( $_POST['w2pcifw_organization_id'] ) ) {
+		update_user_meta( $user_id, w2pcifw_get_meta_key( W2PCIFW_CATEGORY['organization'], 'id' ), intval( $_POST['w2pcifw_organization_id'] ) );
 	}
 }
 
-add_action( 'personal_options_update', 'save_w2p_pipedrive_custom_user_profile_fields' );
-add_action( 'edit_user_profile_update', 'save_w2p_pipedrive_custom_user_profile_fields' );
+add_action( 'personal_options_update', 'save_w2pcifw_pipedrive_custom_user_profile_fields' );
+add_action( 'edit_user_profile_update', 'save_w2pcifw_pipedrive_custom_user_profile_fields' );

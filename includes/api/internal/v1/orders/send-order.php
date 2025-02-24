@@ -6,6 +6,10 @@
  * @since 1.0.0
  */
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 add_action(
 	'rest_api_init',
 	function () {
@@ -15,7 +19,7 @@ add_action(
 			array(
 				array(
 					'methods'             => 'PUT',
-					'callback'            => 'w2p_send_order',
+					'callback'            => 'w2pcifw_send_order',
 					'args'                => array(
 						'direct_to_pipedrive' => array(
 							'type'     => 'boolean',
@@ -23,7 +27,7 @@ add_action(
 							'default'  => true,
 						),
 					),
-					'permission_callback' => 'w2p_jwt_token',
+					'permission_callback' => 'w2pcifw_jwt_token',
 				),
 			)
 		);
@@ -36,11 +40,11 @@ add_action(
  * @param WP_REST_Request $request The REST API request object.
  * @return WP_REST_Response The response object containing the result of the operation.
  */
-function w2p_send_order( WP_REST_Request $request ) {
+function w2pcifw_send_order( WP_REST_Request $request ) {
 
 	try {
 		$id    = (int) $request->get_param( 'id' );
-		$order = new W2P_order( $id );
+		$order = new W2PCIFW_order( $id );
 
 		if ( ! $order->is_order ) {
 			return new WP_REST_Response(
@@ -57,20 +61,67 @@ function w2p_send_order( WP_REST_Request $request ) {
 		$order_queries = $order_data['queries'];
 
 		if ( $create_query ) {
-			$status   = $order->get_status(); // From WooCommerce.
-			$key      = W2P_ORDER_STATUS_HOOK[ $status ];
-			if($key) {
-				$hook_obj = w2p_get_hook( $key ?? "", W2P_CATEGORY['deal'], $id );
+			// Sync organization first.
+			$user            = new W2PCIFW_User( $order_data['customer_id'] );
+			$skip_next_query = false;
+
+			$hook_obj_orga = w2pcifw_get_hook( 'profile_update', W2PCIFW_CATEGORY['organization'], $user->ID );
+			if ( $hook_obj_orga ) {
+				$formated_hook = $hook_obj_orga->w2pcifw_get_formated_hook();
+
+				if ( $hook_obj_orga->get_same_previous_query() ) {
+					$skip_next_query = true;
+				}
+
+				if ( ! $skip_next_query ) {
+					$query_obj = W2PCIFW_Query::create_query(
+						$formated_hook['category'],
+						$formated_hook['source'],
+						$formated_hook['source_id'],
+						"Manual order sync ($formated_hook[label])",
+						$formated_hook
+					);
+					$query_obj->send( true );
+				}
+				$skip_next_query = false;
 			}
 
-			if ( $hook_obj ) {
-				$formated_hook = $hook_obj->w2p_get_formated_hook();
+			// Then person first.
+			$hook_obj_person = w2pcifw_get_hook( 'profile_update', W2PCIFW_CATEGORY['person'], $user->ID );
+			if ( $hook_obj_person ) {
+				$formated_hook = $hook_obj_person->w2pcifw_get_formated_hook();
 
-				$query_obj = W2P_Query::create_query(
+				if ( $hook_obj_person->get_same_previous_query() ) {
+					$skip_next_query = true;
+				}
+
+				if ( ! $skip_next_query ) {
+					$query_obj  = W2PCIFW_Query::create_query(
+						$formated_hook['category'],
+						$formated_hook['source'],
+						$formated_hook['source_id'],
+						"Manual order sync ($formated_hook[label])",
+						$formated_hook
+					);
+					$send_infos = $query_obj->send( true );
+				}
+				$skip_next_query = false;
+			}
+
+			// Order.
+			$status = $order->get_status(); // From WooCommerce.
+			$key    = W2PCIFW_ORDER_STATUS_HOOK[ $status ];
+			if ( $key ) {
+				$hook_obj = w2pcifw_get_hook( $key ?? '', W2PCIFW_CATEGORY['deal'], $id );
+			}
+			if ( $hook_obj ) {
+				$formated_hook = $hook_obj->w2pcifw_get_formated_hook();
+
+				$query_obj = W2PCIFW_Query::create_query(
 					$formated_hook['category'],
 					$formated_hook['source'],
 					$formated_hook['source_id'],
-					"Manual ($formated_hook[label])",
+					"Manual order sync ($formated_hook[label])",
 					$formated_hook
 				);
 
@@ -106,7 +157,7 @@ function w2p_send_order( WP_REST_Request $request ) {
 			}
 
 			if ( $query_to_sent ) {
-				$query_obj = new W2P_Query( $query_to_sent['id'] );
+				$query_obj = new W2PCIFW_Query( $query_to_sent['id'] );
 				$send_info = $query_obj->send( true );
 
 				return new WP_REST_Response(
@@ -140,14 +191,14 @@ function w2p_send_order( WP_REST_Request $request ) {
 			);
 		}
 	} catch ( \Throwable $e ) {
-		w2p_add_error_log( $e->getMessage(), 'w2p_send_order' );
+		w2pcifw_add_error_log( $e->getMessage(), 'w2pcifw_send_order' );
 		return new WP_REST_Response(
 			array(
 				'success' => false,
 				'data'    => $order->get_data(),
 				'message' => 'An error occured during sending the order on your website',
 				'payload' => $request->get_params(),
-				'context' => 'Catch triggered during w2p_send_order',
+				'context' => 'Catch triggered during w2pcifw_send_order',
 			),
 			500
 		);
